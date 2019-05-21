@@ -1,0 +1,99 @@
+Code,Name,FullName
+Hex,Hexose,
+Glc,D-Glucose,D-Glucopyranose
+Galf,D-Galactose,D-Galactofuranose
+Gal,D-Galactose,D-Galactopyranose
+LGal,L-Galactose,L-Galactopyranose
+Man,D-Mannose,D-Mannopyranose
+All,D-Allose,D-Allopyranose
+LAlt,L-Altrose,L-Altropyranose
+Gul,D-Gulose,D-Gulopyranose
+LIdo,L-Idose,L-Idopyranose
+Tal,D-Talose,D-Talopyranose
+Ribf,D-Ribose,D-Ribofuranose
+Rib,D-Ribose,D-Ribopyranose
+Araf,D-Arabinose,D-Arabinofuranose
+Ara,D-Arabinose,D-Arabinopyranose
+LAraf,L-Arabinose,L-Arabinofuranose
+LAra,L-Arabinose,L-Arabinopyranose
+Xyl,D-Xylose,D-Xylopyranose
+Lyx,D-Lyxose,D-Lyxopyranose
+Ery,D-Erythrose,D-Erythrofuranose
+Tho,D-Threose,D-Threofuranose
+Hep,Heptose,
+Lgro-manHep,L-glycero-D-manno-Heptose,L-glycero-D-manno-Heptopyranose (LDManHep)
+gro-manHep,D-glycero-D-manno-Heptose,D-glycero-D-manno-Heptopyranose (DDManHep)
+L6dAlt,6-Deoxy-L-altrose,6-Deoxy-L-altropyranose
+6dTal,6-Deoxy-D-talose,6-Deoxy-D-talopyranose
+Fuc,D-Fucose,6-Deoxy-D-galactopyranose
+LFuc,L-Fucose,6-Deoxy-L-galactopyranose
+Rha,D-Rhamnose,6-Deoxy-D-mannopyranose
+LRha,L-Rhamnose,6-Deoxy-L-mannopyranose
+Qui,D-Quinovose,6-Deoxy-D-glucopyranose
+2dGlc,2-Deoxyglucose,2-Deoxy-D-arabino-hexose
+dRib,2-Deoxyribose,2-Deoxy-D-erythro-pentose
+Oli,Olivose,"2,6-Dideoxy-D-arabino-hexopyranose"
+Tyv,Tyvelose,"3,6-Dideoxy-D-arabino-hexopyranose"
+Asc,Ascarylose,"3,6-Dideoxy-L-arabino-hexopyranose"
+Abe,Abequose,"3,6-Dideoxy-D-xylo-hexopyranose"
+Par,Paratose,"3,6-Dideoxy-D-ribo-hexopyranose"
+Dig,Digitoxose,"2,6-Dideoxy-D-ribo-hexopyranose"
+Col,Colitose,"3,6-Dideoxy-L-xylo-hexopyranose"
+GlcN,D-Glucosamine,2-Amino-2-deoxy-D-glucopyranose
+GalN,D-Galactosamine,2-Amino-2-deoxy-D-galactopyranose
+ManN,D-Mannosamine,2-Amino-2-deoxy-D-mannopyranose
+AllN,D-Allosamine,2-Amino-2-deoxy-D-allopyranose
+LAltN,L-Altrosamine,2-Amino-2-deoxy-L-altropyranose
+GulN,D-Gulosamine,2-Amino-2-deoxy-D-gulopyranose
+LIdoN,L-Idosamine,2-Amino-2-deoxy-L-idopyranose
+TalN,D-Talosamine,2-Amino-2-deoxy-D-talopyranose
+GlcNAc,N-Acetyl-D-glucosamine,2-Acetamido-2-deoxy-D-glucopyranose
+GalNAc,N-Acetyl-D-galactosamine,2-Acetamido-2-deoxy-D-galactopyranose
+ManNAc,N-Acetyl-D-mannosamine,2-Acetamido-2-deoxy-D-mannopyranose
+AllNAc,N-Acetyl-D-allosamine,2-Acetamido-2-deoxy-D-allopyranose
+LAltNAc,N-Acetyl-L-altrosamine,2-Acetamido-2-deoxy-L-altropyranose
+GulNAc,N-Acetyl-D-gulosamine,2-Acetamido-2-deoxy-D-gulopyranose
+LIdoNAc,N-Acetyl-L-idosamine,2-Acetamido-2-deoxy-L-idopyranose
+TalNAc,N-Acetyl-D-talosamine,2-Acetamido-2-deoxy-D-talopyranose
+FucNAc,N-Acetyl-D-fucosamine,"2-Acetamido-2,6-dideoxy-D-galactopyranose"
+LFucNAc,N-Acetyl-L-fucosamine,"2-Acetamido-2,6-dideoxy-L-galactopyranose"
+LRhaNAc,N-Acetyl-L-rhamnosamine,"2-Acetamido-2,6-dideoxy-L-mannopyranose"
+QuiNAc,N-Acetyl-D-quinovosamine,"2-Acetamido-2,6-dideoxy-D-glucopyranose"
+GlcA,D-Glucuronic acid,D-Glucopyranuronic acid
+GalA,D-Galacturonic acid,D-Galactopyranuronic acid
+ManA,D-Mannuronic acid,D-Mannopyranuronic acid
+AllA,D-Alluronic acid,D-Allopyranuronic acid
+LAltA,L-Altruronic acid,L-Altropyranuronic acid
+GulA,D-Guluronic acid,D-Gulopyranuronic acid
+LGulA,L-Guluronic acid,L-Gulopyranuronic acid
+LIdoA,L-Iduronic acid,L-Idopyranuronic acid
+TalA,D-Taluronic acid,D-Talopyranuronic acid
+Sia,Sialic acid,
+Neu,Neuraminic acid,"5-Amino-3,5-dideoxy-D-glycero-D-galacto-non-2-ulosonic acid"
+Neu5Ac,N-Acetylneuraminic acid,"5-Acetamido-3,5-dideoxy-D-glycero-D-galacto-non-2-ulosonic acid"
+Neu5Gc,N-Glycolylneuraminic acid,"5-Glycolylamido-3,5-dideoxy-D-glycero-D-galacto-non-2-ulosonic acid"
+Ery-ol,Erythritol,
+Ara-ol,Arabinitol,
+Xyl-ol,Xylitol,
+Rib-ol,Ribitol,
+Glc-ol,Glucitol,
+Gal-ol,Galactitol,
+Man-ol,Mannitol,
+Psi,D-Psicose,D-ribo-Hex-2-ulopyranose
+Fruf,D-Fructose,D-arabino-Hex-2-ulofuranose (D-fructofuranose)
+Fru,D-Fructose,D-arabino-Hex-2-ulopyranose
+LSor,L-Sorbose,L-xylo-Hex-2-ulopyranose
+Tag,D-Tagatose,D-lyxo-Hex-2-ulopyranose
+Xul,D-Xylulose,D-threo-Pent-2-ulopyranose
+Sed,D-Sedoheptulose,D-altro-Hept-2-ulopyranose
+Api,Apiose,3-C-(Hydroxymethyl)-D-erythofuranose
+Bac,Bacillosamine,"2,4,6-Trideoxy-2,4-diamino-D-glucopyranose"
+The,Thevetose,6-Deoxy-3-O-methyl-D-glucose
+Aco,Acofriose,3-O-Methyl-D-rhamnose
+Cym,Cymarose,"2,6-Dideoxy-3-methyl-D-ribo-hexose"
+Mur,Muramic acid,2-Amino-3-O-[(R)-1-carboxyethyl]-2-deoxy-D-glucopyranose
+MurNAc,N-Acetylmuramic acid,2-Acetamido-3-O-[(R)-carboxyethyl]-2-deoxy-D-glucopyranose
+MurNGc,N-Glycolylmuramic acid,2-Glycolylamido-3-O-[(R)-1-carboxyethyl]-2-deoxy-D-glucopyranose
+Dha,3-Deoxy-lyxo-heptulosaric acid,3-Deoxy-D-lyxo-hept-2-ulopyranosaric acid
+Kdo,Ketodeoxyoctonic acid,3-Deoxy-D-manno-oct-2-ulopyranosonic acid
+Kdn,Ketodeoxynononic acid,3-Deoxy-D-glycero-D-galacto-non-2-ulopyranosonic acid

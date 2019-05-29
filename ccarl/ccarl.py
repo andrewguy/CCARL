@@ -84,15 +84,23 @@ class CCARLClassifier:
         self._training_classes = y
         return
 
-    def predict(self, X, glycan_format="CFG"):
+    def predict(self, glycans, glycan_format="CFG"):
+        features = self._generate_features(glycans, glycan_format)
+        return self._model.predict(features)
+
+    def predict_proba(self, glycans, glycan_format="CFG"):
+        features = self._generate_features(glycans, glycan_format)
+        return self._model.predict_proba(features)
+
+    def _generate_features(self, glycans, glycan_format="CFG"):
         glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
                                                              format=glycan_format)
-                         for x in X]
+                         for x in glycans]
         glycan_graphs_with_restriction = add_termini_nodes_to_graphs(glycan_graphs, 
             permitted_connections=self._permitted_connections)
         features = [generate_features_from_subtrees(self._subtrees, glycan) for 
                     glycan in glycan_graphs_with_restriction]
-        return self._model.predict(features)
+        return features
 
 def _calculate_binders(x, thresholds=(2.0, 2.5)):
     '''Calculate positive and intermediate binders using log transformed data.

@@ -8,7 +8,9 @@ from itertools import zip_longest
 from pyxdameraulevenshtein import damerau_levenshtein_distance, normalized_damerau_levenshtein_distance
 
 cfg_array_versions = {}
-DATA_DIR = '../Data/CFG_Array_Versions/'
+dirname = os.path.dirname(__file__)
+DATA_DIR = os.path.join(dirname, './CFG_Array_Versions/')
+
 for filename in os.listdir(DATA_DIR):
     if filename.endswith('.csv'):
         version = filename.replace('.csv', '').replace('Array_', '')

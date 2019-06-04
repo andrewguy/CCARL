@@ -11,7 +11,7 @@ import matplotlib.patches as patches
 from matplotlib.transforms import Affine2D
 from matplotlib.lines import Line2D
 
-from .glycan_graph_methods import find_root_node
+from .glycan_graph_methods import find_root_node, get_siblings
 
 
 default_line_color = 'black'
@@ -39,6 +39,8 @@ GLYCAN_CODE_CONVERSION = {
 NULL_CODES = ['null']
 
 MODIFICATION_CODES = ['S', 'P', 'Ac', '3S', '4S', '6S', '6P', '9Ac']
+
+TO_DRAW_ABOVE = ['Fuc']
 
 CONNECTION_CODES = {'alpha': '\u03B1',
                     'beta': '\u03B2',
@@ -333,15 +335,14 @@ def _draw_modification_text(ax, x, y, color, scale=0.1, line_weight=0, zorder=2,
         (0.5, 0.5),
         (0., 0.),
     ]) * 2
-    draw_shape([verts], ax, x, y, [GlycanColor.WHITE], scale=scale, line_weight=0, zorder=zorder)
-    ax.text(x, y, text, horizontalalignment='center',
-            verticalalignment='center')
+    #draw_shape([verts], ax, x, y, [GlycanColor.WHITE], scale=scale, line_weight=0, zorder=zorder)
+    _draw_text(ax, x, y, text, size=0.25, horizontalalignment='center', verticalalignment='center')
+    #ax.text(x, y, text, horizontalalignment='center',
+    #        verticalalignment='center', size=linewidth_from_data_units(0.25, ax, 'y'))
     return
 
 def draw_modification_text(text):
     return functools.partial(_draw_modification_text, text=text)
-
-
 
 def get_non_null_leaves(G):
     '''Get all non-null leaf nodes (i.e. nodes with no children except for a null node).'''
@@ -349,28 +350,32 @@ def get_non_null_leaves(G):
     new_leaves = []
     for leaf in leaves:
         label = nx.get_node_attributes(G, 'label')[leaf]
-        if label == 'null' or label in MODIFICATION_CODES:
-            new_leaf = next(G.predecessors(leaf))
-            if len(non_null_children(G, new_leaf)) > 0:
+        if label in NULL_CODES or label in MODIFICATION_CODES:
+            leaf = next(G.predecessors(leaf))
+            if len(non_null_children(G, leaf)) > 0:
                 continue
-            new_leaves.append(new_leaf)
-        else:
-            new_leaves.append(leaf)
+            elif check_can_draw_above(G, leaf):
+                continue
+        elif label in TO_DRAW_ABOVE:
+            if check_can_draw_above(G, leaf):
+                continue
+        new_leaves.append(leaf)
     return new_leaves
 
 def non_null_children(G, node):
     "Return the number of non-null children nodes."
-    children = [x for x in G.successors(node) if nx.get_node_attributes(G, 'label')[x] != "null"
-                and nx.get_node_attributes(G, 'label')[x] not in MODIFICATION_CODES]
+    children = [x for x in G.successors(node) if 
+                nx.get_node_attributes(G, 'label')[x] not in NULL_CODES
+                and nx.get_node_attributes(G, 'label')[x] not in MODIFICATION_CODES
+                and not check_can_draw_above(G, x)]
     return children
 
-    
+  
 def set_parent_node_positions(node_queue, G, node, y_positions, y_min_spacing):
     parent = next(G.predecessors(node), None)
     if parent in y_positions or parent is None:
         return
     children = non_null_children(G, parent)
-    number_of_children = len(children)
     # If all children haven't been processed, then add parent to queue to be processed later,
     # and return to process other children
     if not set(children).issubset(set(y_positions.keys())):
@@ -389,7 +394,10 @@ def set_y_positions(G):
     q = deque(leaves)
     # Just add one 'null node' spacer for each leaf. :)
     y_min = 0.0
-    y_min_spacing = 1.0
+    y_min_spacing = 0.7
+    null_spacing = 0.6
+    mod_spacing = 0.4
+    above_spacing = 1.0
 
     y_positions = {}
 
@@ -397,34 +405,75 @@ def set_y_positions(G):
     while len(q) > 0:
         leaf = q.popleft()
         if leaf not in y_positions:
-            y_positions[leaf] = y_min + (i) * y_min_spacing * 2 + y_min_spacing
+            y_positions[leaf] = y_min + y_min_spacing*(2*i + 1)
             i += 1
         set_parent_node_positions(q, G, leaf, y_positions, y_min_spacing)
     for node in G.nodes():
-        if nx.get_node_attributes(G, 'label')[node] == 'null':
+        if check_can_draw_above(G, node):
             parent = next(G.predecessors(node), None)
             parent_position = y_positions[parent]
-            child_position = parent_position - y_min_spacing * 0.6
+            child_position = parent_position + above_spacing
+            y_positions[node] = child_position
+    for node in G.nodes():
+        if nx.get_node_attributes(G, 'label')[node] in NULL_CODES:
+            parent = next(G.predecessors(node), None)
+            parent_position = y_positions[parent]
+            if check_can_draw_above(G, parent):
+                child_position = parent_position
+            else:
+                child_position = parent_position - null_spacing
             y_positions[node] = child_position
     for node in G.nodes():
         label = nx.get_node_attributes(G, 'label')[node]
         if label in MODIFICATION_CODES:
             parent = next(G.predecessors(node), None)
             parent_position = y_positions[parent]
-            child_position = parent_position + y_min_spacing * 0.8
+            child_position = parent_position + mod_spacing
             y_positions[node] = child_position
     return y_positions
 
 def set_x_positions(G):
     x_max = 0.0
     x_spacing = 1.0
+    null_spacing = 0.6
     depth = nx.shortest_path_length(G, source=find_root_node(G))
     for node in G.nodes():
         label = nx.get_node_attributes(G, 'label')[node]
-        if label == 'null' or label in MODIFICATION_CODES:
+        if label in NULL_CODES or label in MODIFICATION_CODES:
+            parent = next(G.predecessors(node), None)
+            if check_can_draw_above(G, parent):
+                depth[node] = depth[node] - 1 - (1 - null_spacing)
+            else:
+                depth[node] = depth[node] - 1
+        if check_can_draw_above(G, node):
             depth[node] = depth[node] - 1
     x_positions = {x: x_max - (d + 1) * x_spacing for x, d in depth.items()}
     return x_positions
+
+def check_can_draw_above(G, node):
+    '''Check if node can be drawn above a parent node.
+
+    Used for Fucose residues, which are sometimes drawn above a parent residue.
+    However, this needs to satisy certain restrictions, otherwise clashes could
+    occur.
+    '''
+    label = nx.get_node_attributes(G, 'label')[node]
+    if label not in TO_DRAW_ABOVE:
+        return False
+    siblings = get_siblings(G, node)
+    sibling_labels = {nx.get_node_attributes(G, 'label')[x] for x in siblings if x != node}
+    # Modification codes are drawn above glycan, so this would conflict.
+    # Give precedence to a modification code.
+    if sibling_labels.intersection(MODIFICATION_CODES):
+        return False
+    # If there are no other siblings, then this is a terminal sugar. Don't need
+    # to put above parent
+    if not sibling_labels.difference(MODIFICATION_CODES).difference(NULL_CODES):
+        return False
+    # If none of the above conditions trigger, then presume we can plot above
+    # parent sugar.
+    return True
+    
 
 def glycan_tree_layout(G):
     x_pos = set_x_positions(G)
@@ -439,16 +488,30 @@ def get_edge_label(G, edge):
 
 def draw_glycan_diagram(G, ax, draw_terminal_connection_labels=False):
     pos = glycan_tree_layout(G)
+    x_vals = [y[0] for y in pos.values()]
+    y_vals = [y[1] for y in pos.values()]
+    x_lim = (min(x_vals) - 1, max(x_vals) + 1)
+    y_lim = (min(y_vals) - 1, max(y_vals) + 1)
+    ax.set_xlim(x_lim)
+    ax.set_ylim(y_lim)
+    ax.set_aspect('equal')
+    ax.axis('off')
+    linewidth = linewidth_from_data_units(0.03, ax)
     #nx.draw_networkx_edges(G, pos, ax=ax)
     node_labels = nx.get_node_attributes(G, 'label')
     for edge in G.edges():
+        if node_labels[edge[0]] in MODIFICATION_CODES or node_labels[edge[1]] in MODIFICATION_CODES:
+            continue
         x_text_offset = 0.01
-        y_text_offset = 0.01
+        y_text_offset = 0.02
+        v_align = 'bottom'
         edge_x, edge_y = (pos[edge[0]][0], pos[edge[1]][0]), (pos[edge[0]][1], pos[edge[1]][1])
         edge_label = get_edge_label(G, edge)
-        ax.add_line(Line2D(edge_x, edge_y, zorder=1, color='black', linewidth=1))
+        ax.add_line(Line2D(edge_x, edge_y, zorder=1, color='black', linewidth=linewidth))
         if edge_x[0] == edge_x[1]:
             alignment = 'left'
+            v_align = 'center'
+            x_text_offset = -0.01
         elif (edge_y[0] - edge_y[1])/(edge_x[0] - edge_x[1]) > 0:
             x_text_offset = 0
             alignment = 'right'
@@ -462,16 +525,22 @@ def draw_glycan_diagram(G, ax, draw_terminal_connection_labels=False):
             ab_label = CONNECTION_CODES['beta']
         else:
             ab_label = edge_label[0]
-        if node_labels[edge[0]] != 'null' and node_labels[edge[1]] != 'null' and \
+        if node_labels[edge[0]] not in NULL_CODES and node_labels[edge[1]] not in NULL_CODES and \
             node_labels[edge[0]] not in MODIFICATION_CODES and \
             node_labels[edge[1]] not in MODIFICATION_CODES:
-            ax.text(np.average(edge_x, weights=(0.3,0.7)) - x_text_offset,
-                    np.average(edge_y, weights=(0.3,0.7)) + y_text_offset, ab_label, horizontalalignment=alignment)
-            ax.text(np.average(edge_x, weights=(0.6,0.4)) - x_text_offset,
-                    np.average(edge_y, weights=(0.6,0.4)) + y_text_offset, edge_label[2], horizontalalignment=alignment)
-        if draw_terminal_connection_labels and node_labels[edge[1]] == 'null':
-            ax.text(np.average(edge_x, weights=(0.5,0.5)),
-                    np.average(edge_y, weights=(0.3,0.7)), edge_label[2], horizontalalignment=alignment)
+            _draw_text(ax, np.average(edge_x, weights=(0.3,0.7)) - x_text_offset,
+                    np.average(edge_y, weights=(0.3,0.7)) + y_text_offset, ab_label, size=0.25, horizontalalignment=alignment, verticalalignment=v_align)
+            #ax.text(np.average(edge_x, weights=(0.3,0.7)) - x_text_offset,
+            #        np.average(edge_y, weights=(0.3,0.7)) + y_text_offset, ab_label, horizontalalignment=alignment, size=linewidth_from_data_units(0.25, ax, 'y'))
+            _draw_text(ax, np.average(edge_x, weights=(0.6,0.4)) - x_text_offset,
+                    np.average(edge_y, weights=(0.6,0.4)) + y_text_offset, edge_label[2], size=0.25, horizontalalignment=alignment, verticalalignment=v_align)
+            #ax.text(np.average(edge_x, weights=(0.6,0.4)) - x_text_offset,
+            #        np.average(edge_y, weights=(0.6,0.4)) + y_text_offset, edge_label[2], horizontalalignment=alignment, size=linewidth_from_data_units(0.25, ax, 'y'))
+        if draw_terminal_connection_labels and node_labels[edge[1]] in NULL_CODES:
+            _draw_text(ax, np.average(edge_x, weights=(0.5,0.5)) - x_text_offset,
+                    np.average(edge_y, weights=(0.4,0.6)) + y_text_offset, edge_label[2], size=0.25, horizontalalignment=alignment, verticalalignment=v_align)
+            #ax.text(np.average(edge_x, weights=(0.5,0.5)),
+             #       np.average(edge_y, weights=(0.3,0.7)), edge_label[2], horizontalalignment=alignment, size=linewidth_from_data_units(0.25, ax, 'y'))
     #First, process nodes with duplicate positions and combine into one (should only be modification codes that are overlayed)
     reverse_pos_dict = defaultdict(set)
     for node, xy in pos.items():
@@ -495,11 +564,67 @@ def draw_glycan_diagram(G, ax, draw_terminal_connection_labels=False):
         if glycan_name in MODIFICATION_CODES:
             glycan_edge = nx.get_edge_attributes(G, 'label')[[x for x in G.in_edges(node)][0]]
             glycan_name = str(glycan_edge[2]) + glycan_name
-        draw_glycan(glycan_name, ax, xy[0], xy[1], scale=0.2)
+        draw_glycan(glycan_name, ax, xy[0], xy[1], scale=0.2, line_weight=linewidth)
     ax.axis('scaled')
-    ax.axis('off')
     return ax
 
+def _draw_text(ax, x, y, text, size, zorder=2, horizontalalignment='left', verticalalignment='bottom'):
+    if not text:
+        return
+    text_path = TextPath((0, 0), text, size=size)
+    if horizontalalignment == 'right':
+        h_align = np.ptp(text_path.vertices, axis=0)[0]
+    elif horizontalalignment == 'center':
+        h_align = np.ptp(text_path.vertices, axis=0)[0] / 2
+    elif horizontalalignment == 'left':
+        h_align = 0
+    else:
+        raise ValueError("{} is not an appropriate horizontalalignment value".format(horizontalalignment))
+    if verticalalignment == 'top':
+        v_align = np.ptp(text_path.vertices, axis=0)[1]
+    elif verticalalignment == 'center':
+        v_align = np.ptp(text_path.vertices, axis=0)[1] / 2
+    elif verticalalignment == 'bottom':
+        v_align = 0
+    else:
+        raise ValueError("{} is not an appropriate verticalalignment value".format(verticalalignment))
+    translation = matplotlib.transforms.Affine2D().translate(x - h_align, y - v_align)
+    trans_path = text_path.transformed(translation)
+    patch = patches.PathPatch(trans_path, facecolor='black', zorder=zorder,
+                              edgecolor=None, linewidth=0)
+    ax.add_patch(patch)
+    return
 
+def linewidth_from_data_units(linewidth, axis, reference='x'):
+    """
+    Convert a linewidth in data units to linewidth in points.
+
+    Parameters
+    ----------
+    linewidth: float
+        Linewidth in data units of the respective reference-axis
+    axis: matplotlib axis
+        The axis which is used to extract the relevant transformation
+        data (data limits and size must not change afterwards)
+    reference: string
+        The axis that is taken as a reference for the data width.
+        Possible values: 'x' and 'y'. Defaults to 'y'.
+
+    Returns
+    -------
+    linewidth: float
+        Linewidth in points
+    """
+    fig = axis.get_figure()
+    if reference == 'x':
+        length = fig.bbox_inches.width * axis.get_position().width
+        value_range = np.diff(axis.get_xlim())
+    elif reference == 'y':
+        length = fig.bbox_inches.height * axis.get_position().height
+        value_range = np.diff(axis.get_ylim())
+    # Convert length to points
+    length *= 72
+    # Scale linewidth to value range
+    return linewidth * (length / value_range)
 
 

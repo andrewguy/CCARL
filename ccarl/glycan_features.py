@@ -10,7 +10,7 @@ from .glycan_graph_methods import graph_fingerprint
 
 def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
     gbolt_path, mrmr_reader, mrmr_bin, support_all=0.05,
-    support_pos=0.4, parent_edge_types=False):
+    support_pos=0.4, parent_edge_types=False, num_mrmr_features=10):
     '''Get list of features from an initial list of glycans.
     
     Uses MRMR to generate candidate list of motifs from a DiGraph
@@ -32,6 +32,7 @@ def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
             subtrees in positive glycans.
         parent_edge_types (bool): Extend subtrees by adding extra features for
             each parent edge type.
+        num_mrmr_features (int, optional): Number of features extracted by mRMR.
     Returns:
         list: A final set of features selected by MRMR.
         list: A list of dictionaries containing information of a particular
@@ -44,7 +45,6 @@ def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
          DataFrame: A DataFrame containing all features extracted (including
             those not selected by MRMR)
     '''
-    num_mrmr_features = 10
     # Get frequent subtrees using gBolt.
     # Support is set to 5%. Seems to be a reasonable threshold that doesn't miss important subtrees.
     freq_subtrees = get_all_frequent_subtrees(glycan_graphs, binding_class,

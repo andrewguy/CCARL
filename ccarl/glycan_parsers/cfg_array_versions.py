@@ -17,7 +17,7 @@ for filename in os.listdir(DATA_DIR):
         cfg_array_versions[version] = pd.read_csv(os.path.join(DATA_DIR, filename), header=None)
 
 
-def get_likely_cfg_array_version(glycan_list, mismatch_threshold=5):
+def get_likely_cfg_array_version(glycan_list, distance_threshold=2.0):
     '''Get the most likely CFG glycan array given a list of glycans.
 
     Uses a scaled Levenshtein distance to compute similarity between glycan strings,
@@ -31,9 +31,11 @@ def get_likely_cfg_array_version(glycan_list, mismatch_threshold=5):
 
     Args:
         glycan_list (list): A list of glycan strings ordered by index.
+        distance_threshold (float): A threshold for total scaled Levenshtein distance for calling a match.
     Returns:
-        CFG glycan list (list), most likely array version (string), number of mismatches (int)
+        CFG glycan list (list), most likely array version (string), number of mismatches (int), scaled Levenshtein distance (float)
     '''
+    glycan_list = list(glycan_list)
     for i, glycan in enumerate(glycan_list):
         # Handle odd characters in some excel files. Nonbreaking spaces, greek letters etc.
         glycan_list[i] = glycan.replace('–', '-').replace('α', 'a') \
@@ -52,6 +54,6 @@ def get_likely_cfg_array_version(glycan_list, mismatch_threshold=5):
             likely_array = key
             likely_array_mismatches = non_matches
             scaled_levenshtein_total = scaled_levenshtein_sum
-    if likely_array_mismatches > mismatch_threshold:
+    if scaled_levenshtein_total > distance_threshold:
         raise ValueError("Glycan list does not match to known array versions.")
     return list(cfg_array_versions[likely_array][1]), likely_array, likely_array_mismatches, scaled_levenshtein_total

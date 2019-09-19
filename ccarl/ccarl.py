@@ -9,11 +9,13 @@ from .stats_utils import mad_based_outlier
 
 
 class CCARLClassifier:
-    def __init__(self, support_pos=0.4, support_all=0.05, z_score_thresholds=(1.5, 3.5),
+    def __init__(self, support_pos=0.4, support_all=0.05, num_mrmr_features=10,
+                 z_score_thresholds=(1.5, 3.5),
                  permitted_connections=None, mrmr_reader='mrmr-reader',
                  mrmr_bin='fast-mrmr', gbolt_bin='gbolt'):
         self._model = None
         self._features = None
+        self._mrmr_subtrees = None
         self._z_score_thresholds = z_score_thresholds
         self._support_all = support_all
         self._support_pos = support_pos
@@ -27,34 +29,30 @@ class CCARLClassifier:
         self._mrmr_reader = mrmr_reader
         self._mrmr_bin = mrmr_bin
         self._gbolt_bin = gbolt_bin
+        self._num_mrmr_features = num_mrmr_features
         return
 
-    def train(self, glycans, y, glycan_format="CFG", raw_rfu=True):
+    def train(self, glycans, y, glycan_format="CFG", parse_linker=True):
         # Optionally process RFU values into tertiary binding classes.
-        if raw_rfu:
-            self._rfu = y
-            self._log_rfu = _log_rfu_values(y, shift_data=True)
-            self._binding_class = _calculate_binders(self._log_rfu,
-                                                     self._z_score_thresholds)
-        else:
-            self._binding_class = y
+        self._binding_class = y
         self.glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
                                                                  format=glycan_format)
                               for x in glycans]
+        # Define the allowed linkages for each sugar type
         if self._permitted_connections is None:
             self._permitted_connections = get_permitted_connections(self.glycan_graphs)
         self.glycan_graphs_with_restriction = add_termini_nodes_to_graphs(self.glycan_graphs, 
             permitted_connections=self._permitted_connections)
-        feature_set_by_mrmr, freq_subtrees_subset, feature_df = extract_features_from_glycan_graphs(
+        mrmr_features, self._mrmr_subtrees, feature_df = extract_features_from_glycan_graphs(
             self.glycan_graphs_with_restriction,
             self._binding_class, self._gbolt_bin, self._mrmr_reader, self._mrmr_bin,
             support_all=self._support_all, support_pos=self._support_pos, 
-            parent_edge_types=True)
-        mcc_scorer = make_scorer(matthews_corrcoef)
+            parent_edge_types=True, num_mrmr_features=self._num_mrmr_features)
 
+        mcc_scorer = make_scorer(matthews_corrcoef)
         # Use features to train a classifier...
         # Now perform some additional feature selection with L1 regularisation to reduce unimportant features.
-        X = feature_df.loc[:, feature_set_by_mrmr].values
+        X = feature_df.loc[:, mrmr_features].values
         y = feature_df.iloc[:, 0].astype('bool').astype('int').values
         
         logistic_clf_lasso = LogisticRegressionCV(scoring=mcc_scorer, cv=5, penalty='l1',
@@ -63,13 +61,13 @@ class CCARLClassifier:
 
         logistic_clf_lasso.fit(X, y)
         coefs = logistic_clf_lasso.coef_[0]
-        feature_set_reduced = [x for x, c in zip(feature_set_by_mrmr, coefs) if c != 0]
-        freq_subtrees_reduced = [x for x, c in zip(freq_subtrees_subset, coefs) if c != 0]
+        feature_set_reduced = [x for x, c in zip(mrmr_features, coefs) if c != 0]
+        freq_subtrees_reduced = [x for x, c in zip(self._mrmr_subtrees, coefs) if c != 0]
         if len(feature_set_reduced) == 0:
             print("No features found following L1 regularization!")
             print("Reverting to original features identified by mRMR.")
-            feature_set_reduced = feature_set_by_mrmr
-            freq_subtrees_reduced = freq_subtrees_subset
+            feature_set_reduced = mrmr_features
+            freq_subtrees_reduced = self._mrmr_subtrees
         # Run logistic regression again on reduced set of features.
         X = feature_df.loc[:, feature_set_reduced].values
         y = feature_df.iloc[:, 0].astype('bool').astype('int').values
@@ -79,7 +77,7 @@ class CCARLClassifier:
                                                   class_weight='balanced')
         logistic_clf_reduced.fit(X, y)
         self._model = logistic_clf_reduced
-        self._subtrees = [x['subtree'] for x in freq_subtrees_reduced]
+        self.subtree_features = [x['subtree'] for x in freq_subtrees_reduced]
         self._training_features = X
         self._training_classes = y
         return
@@ -98,7 +96,7 @@ class CCARLClassifier:
                          for x in glycans]
         glycan_graphs_with_restriction = add_termini_nodes_to_graphs(glycan_graphs, 
             permitted_connections=self._permitted_connections)
-        features = [generate_features_from_subtrees(self._subtrees, glycan) for 
+        features = [generate_features_from_subtrees(self.subtree_features, glycan) for 
                     glycan in glycan_graphs_with_restriction]
         return features
 

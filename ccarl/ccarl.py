@@ -55,12 +55,20 @@ class CCARLClassifier:
         X = feature_df.loc[:, mrmr_features].values
         y = feature_df.iloc[:, 0].astype('bool').astype('int').values
         
-        logistic_clf_lasso = LogisticRegressionCV(scoring=mcc_scorer, cv=5, penalty='l1',
+        n_folds = 5
+        logistic_clf_lasso = LogisticRegressionCV(scoring=mcc_scorer, cv=n_folds, penalty='l1',
                                                   solver='liblinear', class_weight='balanced',
                                                   Cs=100)
 
         logistic_clf_lasso.fit(X, y)
-        coefs = logistic_clf_lasso.coef_[0]
+        # For l1 regularisation, C needs to scale inversely with class size.
+        # i.e. with more data samples, the best C value is proportionally less.
+        best_C_scaled = logistic_clf_lasso.C_[0] * (1 - 1 / n_folds)
+        logistic_clf_lasso_final = LogisticRegression(penalty='l1', solver='liblinear',
+                                                      class_weight='balanced', C=best_C_scaled)
+        logistic_clf_lasso_final.fit(X, y)
+        coefs = logistic_clf_lasso_final.coef_[0]
+
         feature_set_reduced = [x for x, c in zip(mrmr_features, coefs) if c != 0]
         freq_subtrees_reduced = [x for x, c in zip(self._mrmr_subtrees, coefs) if c != 0]
         if len(feature_set_reduced) == 0:
@@ -73,8 +81,10 @@ class CCARLClassifier:
         y = feature_df.iloc[:, 0].astype('bool').astype('int').values
 
         # Set C to inf to obtain unpenalised logistic regression
-        logistic_clf_reduced = LogisticRegression(penalty='l2', C=np.inf, solver='lbfgs',
+        logistic_clf_reduced = LogisticRegression(penalty='l2', C=100, solver='lbfgs',
                                                   class_weight='balanced')
+        #logistic_clf_reduced = LogisticRegressionCV(scoring=mcc_scorer, cv=n_folds, penalty='l2', Cs=100, solver='lbfgs',
+        #                                          class_weight='balanced')
         logistic_clf_reduced.fit(X, y)
         self._model = logistic_clf_reduced
         self.subtree_features = [x['subtree'] for x in freq_subtrees_reduced]

@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.metrics import matthews_corrcoef, make_scorer
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from .glycan_graph_methods import generate_digraph_from_glycan_string, add_termini_nodes_to_graphs
 from .glycan_features import extract_features_from_glycan_graphs, generate_features_from_subtrees
@@ -76,9 +77,30 @@ class CCARLClassifier:
             print("Reverting to original features identified by mRMR.")
             feature_set_reduced = mrmr_features
             freq_subtrees_reduced = self._mrmr_subtrees
+        
         # Run logistic regression again on reduced set of features.
         X = feature_df.loc[:, feature_set_reduced].values
         y = feature_df.iloc[:, 0].astype('bool').astype('int').values
+        if X.shape[1] > 1:
+            # Calculate Variance Inflation Factors, and remove redundant features
+            # Drop feature if VIF is inf, but do it stepwise.
+            vif = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
+
+            #Indices of features to keep.
+            to_keep = list(range(len(vif)))
+
+            for _ in range(len(vif)):
+                if len(vif) == 1:
+                    break
+                if np.any(np.array(vif) == np.inf):
+                    to_remove = len(vif) - vif[::-1].index(np.inf) - 1
+                    del(to_keep[to_remove])
+                    vif = [variance_inflation_factor(X[:,np.array(to_keep)], i) for i in range(X[:,np.array(to_keep)].shape[1])]
+                else:
+                    break
+
+            X = X[:, np.array(to_keep)]
+            freq_subtrees_reduced = [freq_subtrees_reduced[x] for x in to_keep]
 
         # Set C to inf to obtain unpenalised logistic regression
         logistic_clf_reduced = LogisticRegression(penalty='l2', C=100, solver='lbfgs',

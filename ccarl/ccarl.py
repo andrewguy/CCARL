@@ -95,6 +95,8 @@ class CCARLClassifier:
                 if np.any(np.array(vif) == np.inf):
                     to_remove = len(vif) - vif[::-1].index(np.inf) - 1
                     del(to_keep[to_remove])
+                    if len(to_keep) == 1:
+                        break
                     vif = [variance_inflation_factor(X[:,np.array(to_keep)], i) for i in range(X[:,np.array(to_keep)].shape[1])]
                 else:
                     break

@@ -22,7 +22,8 @@ def cfg_to_kcf(glycan, glycan_id=''):
     y_mid = np.max(list(y_positions.values())) - np.ptp(list(y_positions.values())) / 2
     node_dict = nx.get_node_attributes(glycan_graph, 'label')
     edge_dict = nx.get_edge_attributes(glycan_graph, 'label')
-    node_str = '\n'.join([f"      {key}  {value}    {x_positions[key] * xscale:.2f}    {(y_positions[key] - y_mid) * yscale:.2f}" for key, value in node_dict.items()])
+    node_str = '\n'.join([f"      {key}  {value}    {x_positions[key] * xscale:.0f}    {(y_positions[key] - y_mid) * yscale:.0f}" \
+        for key, value in sorted(node_dict.items())])
     edge_str = '\n'.join([f"      {i}  {x[0][1]}:{''.join(x[1][0:2])}   {x[0][0]}:{x[1][2]}" for i, x in enumerate(edge_dict.items())])
     kcf_string = (f'ENTRY         Glycan\n'
                   f'NODE  {len(node_dict)}\n'
@@ -66,7 +67,10 @@ def kcf_to_digraph(kcf_glycan):
             _, edge_child, edge_parent = line.split()
             child_id = int(edge_child.split(':')[0])
             parent_id = int(edge_parent.split(":")[0])
-            parent_link = edge_parent.split(':')[1]
+            try:
+                parent_link = edge_parent.split(':')[1]
+            except IndexError:
+                parent_link = ''
             child_link = ''.join([x for x in edge_child.split(":")[1] if x.isnumeric()])
             child_anomer = ''.join([x for x in edge_child.split(":")[1] if x.isalpha()])
             edge_dict[(parent_id, child_id)] = {'label': (child_anomer, child_link, parent_link)}

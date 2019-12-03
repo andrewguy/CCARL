@@ -71,8 +71,14 @@ def kcf_to_digraph(kcf_glycan):
                 parent_link = edge_parent.split(':')[1]
             except IndexError:
                 parent_link = ''
-            child_link = ''.join([x for x in edge_child.split(":")[1] if x.isnumeric()])
-            child_anomer = ''.join([x for x in edge_child.split(":")[1] if x.isalpha()])
+            try:
+                child_link = ''.join([x for x in edge_child.split(":")[1] if x.isnumeric()])
+            except IndexError:
+                child_link = ''
+            try:
+                child_anomer = ''.join([x for x in edge_child.split(":")[1] if x.isalpha()])
+            except IndexError:
+                child_anomer = ''
             edge_dict[(parent_id, child_id)] = {'label': (child_anomer, child_link, parent_link)}
     G = nx.DiGraph()
     G.add_nodes_from(node_dict.keys())

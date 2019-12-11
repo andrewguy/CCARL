@@ -102,7 +102,7 @@ def get_glycan_shape(glycan_code):
         return draw_modification_text(glycan_code)
     if glycan_code in CONNECTION_CODES:
         return draw_modification_text(CONNECTION_CODES[glycan_code])
-    return draw_modification_text(glycan_code)
+    return draw_modification_text(glycan_code, white_background=True)
     #raise ValueError("Glycan code {} not found in standard list.".format(glycan_code))
 
 
@@ -326,7 +326,7 @@ def draw_cross(ax, x, y, color, scale=0.1, line_weight=2.0, zorder=2):
                scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
-def _draw_modification_text(ax, x, y, color, scale=0.1, line_weight=0, zorder=2, text=''):
+def _draw_modification_text(ax, x, y, color, scale=0.1, line_weight=0, zorder=2, text='', white_background=False):
     verts = np.array([
         (0.5, 0.5),
         (0.5, -0.5),
@@ -335,14 +335,17 @@ def _draw_modification_text(ax, x, y, color, scale=0.1, line_weight=0, zorder=2,
         (0.5, 0.5),
         (0., 0.),
     ]) * 2
-    #draw_shape([verts], ax, x, y, [GlycanColor.WHITE], scale=scale, line_weight=0, zorder=zorder)
-    _draw_text(ax, x, y, text, size=0.25, horizontalalignment='center', verticalalignment='center')
+    if white_background:
+        draw_shape([verts], ax, x, y, [GlycanColor.WHITE], scale=scale, line_weight=0, zorder=zorder)
+        _draw_text(ax, x, y, text, size=0.25, horizontalalignment='left', verticalalignment='center')
+    else:
+        _draw_text(ax, x, y, text, size=0.25, horizontalalignment='center', verticalalignment='center')
     #ax.text(x, y, text, horizontalalignment='center',
     #        verticalalignment='center', size=linewidth_from_data_units(0.25, ax, 'y'))
     return
 
-def draw_modification_text(text):
-    return functools.partial(_draw_modification_text, text=text)
+def draw_modification_text(text, white_background=False):
+    return functools.partial(_draw_modification_text, text=text, white_background=white_background)
 
 def get_non_null_leaves(G):
     '''Get all non-null leaf nodes (i.e. nodes with no children except for a null node).'''

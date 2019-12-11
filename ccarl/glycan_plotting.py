@@ -102,7 +102,7 @@ def get_glycan_shape(glycan_code):
         return draw_modification_text(glycan_code)
     if glycan_code in CONNECTION_CODES:
         return draw_modification_text(CONNECTION_CODES[glycan_code])
-    return draw_pentagon
+    return draw_modification_text(glycan_code)
     #raise ValueError("Glycan code {} not found in standard list.".format(glycan_code))
 
 
@@ -351,7 +351,10 @@ def get_non_null_leaves(G):
     for leaf in leaves:
         label = nx.get_node_attributes(G, 'label')[leaf]
         if label in NULL_CODES or label in MODIFICATION_CODES:
-            leaf = next(G.predecessors(leaf))
+            try:
+                leaf = next(G.predecessors(leaf))
+            except StopIteration:
+                new_leaves.append(leaf)    
             if len(non_null_children(G, leaf)) > 0:
                 continue
             elif check_can_draw_above(G, leaf):
@@ -426,7 +429,10 @@ def set_y_positions(G):
     for node in G.nodes():
         label = nx.get_node_attributes(G, 'label')[node]
         if label in MODIFICATION_CODES:
-            parent = next(G.predecessors(node), None)
+            try:
+                parent = next(G.predecessors(node))
+            except StopIteration:
+                continue
             parent_position = y_positions[parent]
             child_position = parent_position + mod_spacing
             y_positions[node] = child_position
@@ -457,6 +463,8 @@ def check_can_draw_above(G, node):
     However, this needs to satisy certain restrictions, otherwise clashes could
     occur.
     '''
+    if node is None:
+        return False
     label = nx.get_node_attributes(G, 'label')[node]
     if label not in TO_DRAW_ABOVE:
         return False
@@ -561,7 +569,8 @@ def draw_glycan_diagram(G, ax, draw_terminal_connection_labels=False):
 
     for node, xy in pos.items():
         glycan_name = node_labels[node]
-        if glycan_name in MODIFICATION_CODES:
+        # If a modification code and only one node, then just need to plot the modification label (no connection info)
+        if glycan_name in MODIFICATION_CODES and len(node_labels) > 1:
             glycan_edge = nx.get_edge_attributes(G, 'label')[[x for x in G.in_edges(node)][0]]
             glycan_name = str(glycan_edge[2]) + glycan_name
         draw_glycan(glycan_name, ax, xy[0], xy[1], scale=0.2, line_weight=linewidth)

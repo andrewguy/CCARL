@@ -1,10 +1,12 @@
 import networkx as nx
-from collections import defaultdict, Counter
+from collections import defaultdict
 
 from .glycan_parsers.cfg_parser import CFGGlycanParser
+from .glycan_parsers.gsl_parser import GSLGlycanParser
 
 parsers = {
-    'CFG': CFGGlycanParser()
+    'CFG': CFGGlycanParser(),
+    'GSL': GSLGlycanParser()
 }
 
 PERMITTED_CONNECTIONS = {
@@ -21,6 +23,7 @@ PERMITTED_CONNECTIONS = {
     'GlcNA': {4}
 }
 
+
 def generate_digraph_from_glycan_string(glycan_string, parse_linker=False,
                                         format='CFG'):
     '''Generate a Networkx digraph object from a CFG glycan string.
@@ -33,7 +36,7 @@ def generate_digraph_from_glycan_string(glycan_string, parse_linker=False,
             condensed' format.
         parse_linker(bool, optional): Set to True if linker should be included
             in final graph.
-        format ('str'): Format for glycan string. Choose from ['CFG'].
+        format ('str'): Format for glycan string. Choose from ['CFG', 'GSL'].
 
     Returns:
         A networkx DiGraph object.
@@ -94,6 +97,7 @@ def subgraphs_are_equivalent(subgraph_1, subgraph_2):
     em = nx.isomorphism.categorical_edge_match('label', None)
     return nx.is_isomorphic(subgraph_1, subgraph_2, node_match=nm, edge_match=em)
 
+
 def get_permitted_connections(graph_list):
     '''Return permitted connections for a set of glycan DiGraphs.
 
@@ -114,6 +118,7 @@ def get_permitted_connections(graph_list):
             saccharide_connections[sugar].update(connections)
     return saccharide_connections
 
+
 def _add_null_connections(graph, permitted_connections):
     '''Add null connections to a graph based on a dictionary of permitted links.
 
@@ -133,8 +138,9 @@ def _add_null_connections(graph, permitted_connections):
             next_node_index = max(G.nodes()) + 1
             G.add_node(next_node_index, label='null')
             G.add_edge(node, next_node_index,
-                        label=('', '', ','.join((sorted(null_connections)))))
+                       label=('', '', ','.join((sorted(null_connections)))))
     return G
+
 
 def add_termini_nodes_to_graphs(graph_list, permitted_connections=PERMITTED_CONNECTIONS):
     '''Adds termini nodes to glycan graphs. Returns a new list of graphs.
@@ -196,6 +202,7 @@ def get_siblings(G, node):
         siblings.update(list(G.successors(parent)))
     return siblings
 
+
 def convert_from_graph_to_digraph(graph):
     '''Convert from a Graph to a DiGraph object
 
@@ -221,6 +228,7 @@ def convert_from_graph_to_digraph(graph):
                  for neighbor in neighbors if set(key) == {edge[0], neighbor} and value == 1][0]
         G_dir.add_edge(parent, child, label=edge[1]['label'][1])
     return G_dir
+
 
 def convert_from_digraph_to_graph(digraph):
     '''Convert from a DiGraph to a 'pseudo directed graph' as a Graph object
@@ -251,3 +259,26 @@ def convert_from_digraph_to_graph(digraph):
         G_und.add_edge(edge[0], max_node_id, label=0)
         G_und.add_edge(max_node_id, edge[1], label=1)
     return G_und
+
+
+def digraph_to_glycan_string(G):
+    '''Convert a Digraph object into a CFG-like string'''
+    root_node = find_root_node(G)
+    glycan_str = _digraph_to_string(G, root_node)
+    return glycan_str
+
+
+def _digraph_to_string(G, node):
+    node_repr = G.nodes[node]['label']
+    children = G.neighbors(node)
+    children_reprs = []
+    for child in children:
+        edge_data = G.edges[(node, child)]['label']
+        link_repr = f"{edge_data[0]}{edge_data[1]}-{edge_data[2]}"
+        child_repr = _digraph_to_string(G, child)
+        children_reprs.append(child_repr + link_repr)
+    if children_reprs:
+        full_child_repr = children_reprs[0] + ''.join([f"({x})" for x in children_reprs[1:]])
+    else:
+        full_child_repr = ''
+    return f"{full_child_repr}{node_repr}"

@@ -1,10 +1,3 @@
-from collections import defaultdict
-import pyparsing as pp
-from pyparsing import Word, Optional, nums, oneOf, Suppress, Literal, OneOrMore, Or
-from pyparsing import Group, Forward, And, LineEnd
-
-from .sugar_codes import MONOSACCHARIDE_CODES
-
 '''
 This module contains a number of functions to convert a CFG glycan string into a more friendly
 format.
@@ -13,11 +6,19 @@ The main class within this module is the `CFGGlycanParser` class:
 
 >>> glycan_string = '(6S)Galb1-4(Fuca1-3)(Fuca1-5)Ara-olb1-6Galb1-4Glc-Sp21'
 >>> parser = CFGGlycanParser()
->>> results = parser.cfg_string_to_graph(glycan_string)
+>>> results = parser.string_to_graph(glycan_string)
 
 The output from this function can be used to build graphs using one of several Python graph
 libraries, such as `networkx`.
 '''
+
+from collections import defaultdict
+import pyparsing as pp
+from pyparsing import Word, Optional, nums, oneOf, Suppress, Literal, OneOrMore
+from pyparsing import Group, Forward, LineEnd
+
+from .sugar_codes import MONOSACCHARIDE_CODES
+
 
 # Spacer anomer types taken from Grant et al., 2014 (Glycobiology)
 SPACER_ANOMERS = {
@@ -41,6 +42,7 @@ SPACER_ANOMERS = {
     'Sp24': 'a/b',
     'Sp25': 'a/b'
 }
+
 
 class CFGGlycanParser(object):
     '''A parser for CFG glycan strings.
@@ -96,14 +98,14 @@ class CFGGlycanParser(object):
         digit = Word(nums, exact=1)
         anomeric_carbon_configuration = oneOf('a b')('Anomeric_carbon_configuration')
         link = Optional(anomeric_carbon_configuration) + Optional(digit)('c1') + Suppress('-') + \
-               Optional(digit)('c2')
+            Optional(digit)('c2')
         modifier = oneOf('S P')("Modifier")
         branched_modification = Suppress('(') + digit + modifier + Suppress(')')
         modification = Group((digit + modifier) | branched_modification)
         monosaccharide = oneOf(self.monosaccharide_codes)('Monosaccharide')
 
         sugar_and_link = Group(Optional(OneOrMore(modification))("Modification")) + \
-                         Group(monosaccharide + link)
+            Group(monosaccharide + link)
         spacer = Group((Literal('Sp') + OneOrMore(digit) + LineEnd()) | Word('-MDPLys'))("Spacer")
         glycan = Forward()
 
@@ -143,6 +145,7 @@ def is_modification(parser_object):
         return True
     else:
         return False
+
 
 def is_spacer(parser_object):
     '''Returns True if object is a spacer.'''
@@ -215,7 +218,7 @@ def _parse_cfg_structure_to_graph(parsed_result, index, output_graph,
         if is_sugar(item):
             index += 1
             item_index = index
-            #link to previous item(s) in structure
+            # link to previous item(s) in structure
             for child_index in to_link_to_next_parent:
                 output_graph[child_index].add(item_index)
                 output_graph[item_index].add(child_index)
@@ -239,7 +242,7 @@ def _parse_cfg_structure_to_graph(parsed_result, index, output_graph,
         if parse_linker and is_spacer(item):
             index += 1
             item_index = index
-            #link to previous item(s) in structure
+            # link to previous item(s) in structure
             for child_index in to_link_to_next_parent:
                 output_graph[child_index].add(item_index)
                 output_graph[item_index].add(child_index)

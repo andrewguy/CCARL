@@ -8,10 +8,9 @@ from math import sqrt, sin, cos, pi
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 import matplotlib.patches as patches
-from matplotlib.transforms import Affine2D
 from matplotlib.lines import Line2D
 
-from .glycan_graph_methods import find_root_node, get_siblings
+from ccarl.glycan_graph_methods import find_root_node, get_siblings
 
 
 default_line_color = 'black'
@@ -46,18 +45,20 @@ CONNECTION_CODES = {'alpha': '\u03B1',
                     'beta': '\u03B2',
                     'unknown_link': '\u03B1/\u03B2'}
 
+
 def draw_glycan(glycan_code, ax, x, y, scale=0.1, line_weight=1.0, zorder=2):
     '''Draw a glycan symbol on a matplotlib axis.
-    
+
     Returns the current axis.'''
     shape_function = get_glycan_shape(glycan_code)
     glycan_color = get_glycan_color(glycan_code)
     shape_function(ax, x, y, glycan_color, scale=scale, line_weight=line_weight, zorder=zorder)
     return ax
 
+
 def get_glycan_color(glycan_code):
     '''Return an appropriate color given a glycan code.
-    
+
     Args:
         glycan_code (str): A short glycan code (CFG notation).
     Returns:
@@ -77,18 +78,20 @@ def get_glycan_color(glycan_code):
         if glycan_code in codes:
             return color
     return GlycanColor.WHITE
-    #raise ValueError("Glycan code {} not found in standard list.".format(glycan_code))
+    # raise ValueError("Glycan code {} not found in standard list.".format(glycan_code))
+
 
 def get_glycan_shape(glycan_code):
     '''Return an appropriate shape function given a glycan code.
-    
+
     Args:
         glycan_code (str): A short glycan code (CFG notation).
     Returns:
         GlycanColor (Enum): A color value for the glycan code.
     '''
-    shape_functions = [draw_circle, draw_square, draw_bisected_square, draw_bisected_diamond, draw_triangle, draw_bisected_triangle,
-                       draw_rectangle, draw_star, draw_diamond, draw_flat_diamond, draw_flat_hexagon, draw_pentagon]
+    shape_functions = [draw_circle, draw_square, draw_bisected_square, draw_bisected_diamond,
+                       draw_triangle, draw_bisected_triangle, draw_rectangle, draw_star,
+                       draw_diamond, draw_flat_diamond, draw_flat_hexagon, draw_pentagon]
     if glycan_code in GLYCAN_CODE_CONVERSION:
         glycan_code = GLYCAN_CODE_CONVERSION[glycan_code]
     if not glycan_code:
@@ -103,7 +106,6 @@ def get_glycan_shape(glycan_code):
     if glycan_code in CONNECTION_CODES:
         return draw_modification_text(CONNECTION_CODES[glycan_code])
     return draw_modification_text(glycan_code, white_background=True)
-    #raise ValueError("Glycan code {} not found in standard list.".format(glycan_code))
 
 
 class GlycanColor(Enum):
@@ -127,13 +129,13 @@ def draw_shape(verts_list, ax, x, y, color_list, scale=0.1, line_weight=1.0, zor
     path_list = [Path(verts * scale, codes) for verts, codes in zip(verts_list, codes_list)]
     trans_path_list = [path.transformed(matplotlib.transforms.Affine2D().translate(x, y)) for path in path_list]
     patch_list = [patches.PathPatch(t_path, facecolor=color.value, lw=line_weight, zorder=zorder,
-                  edgecolor=edgecolor.value) for t_path, color in 
+                  edgecolor=edgecolor.value) for t_path, color in
                   zip(trans_path_list, color_list)]
     for patch in patch_list:
         ax.add_patch(patch)
     return
-    
-    
+
+
 def draw_circle(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     path = Path(Path.unit_circle().vertices * scale, Path.unit_circle().codes)
     trans = matplotlib.transforms.Affine2D().translate(x, y)
@@ -156,6 +158,7 @@ def draw_square(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
+
 def draw_bisected_square(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     top_verts = np.array([
         (0.5, 0.5),
@@ -164,7 +167,7 @@ def draw_bisected_square(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
         (0.5, 0.5),
         (0., 0.),
     ]) * 2
-    
+
     bottom_verts = np.array([
         (0.5, -0.5),
         (-0.5, -0.5),
@@ -187,11 +190,11 @@ def draw_bisected_diamond(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2)
     ]) * sqrt(2)
 
     mid_vert = np.array([
-        (1,0),
-        (-1,0),
+        (1, 0),
+        (-1, 0),
         (0, 0)
     ]) * sqrt(2)
-    
+
     top_verts = np.array([
         (1, 0),
         (0, 1),
@@ -212,6 +215,7 @@ def draw_bisected_diamond(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2)
     draw_shape([bottom_verts], ax, x, y, [GlycanColor.WHITE], scale=scale, line_weight=line_weight, zorder=zorder, edgecolor=GlycanColor.CLEAR)
     return
 
+
 def draw_triangle(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     verts = np.array([
         (0, 0.5),
@@ -222,6 +226,7 @@ def draw_triangle(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     ]) * 1.9
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
+
 
 def draw_bisected_triangle(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     top_verts = np.array([
@@ -255,6 +260,7 @@ def draw_diamond(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
+
 def draw_rectangle(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     verts = np.array([
         (0.5, 0.25),
@@ -267,6 +273,7 @@ def draw_rectangle(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
+
 def draw_star(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     outer_radius = 0.5
     inner_radius = 0.25
@@ -276,10 +283,11 @@ def draw_star(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
+
 def draw_pentagon(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     outer_radius = 0.5
     coords_outer = [(outer_radius*cos(-2*pi*i/5 + pi/2), outer_radius*sin(-2*pi*i/5 + pi/2)) for i in range(6)]
-    verts = np.array(coords_outer)* 2.5
+    verts = np.array(coords_outer) * 2.5
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
@@ -296,6 +304,7 @@ def draw_flat_diamond(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
+
 def draw_flat_hexagon(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     verts = np.array([
         (0.4, 0.5),
@@ -310,13 +319,14 @@ def draw_flat_hexagon(ax, x, y, color, scale=0.1, line_weight=1.0, zorder=2):
     draw_shape([verts], ax, x, y, [color], scale=scale, line_weight=line_weight, zorder=zorder)
     return
 
+
 def draw_cross(ax, x, y, color, scale=0.1, line_weight=2.0, zorder=2):
     top_verts = np.array([
         (0.5, 0.5),
         (-0.5, -0.5),
         (0., 0.),
     ]) * 1.5
-    
+
     bottom_verts = np.array([
         (-0.5, 0.5),
         (0.5, -0.5),
@@ -325,6 +335,7 @@ def draw_cross(ax, x, y, color, scale=0.1, line_weight=2.0, zorder=2):
     draw_shape([top_verts, bottom_verts], ax, x, y, [GlycanColor.WHITE, GlycanColor.WHITE], edgecolor=color, 
                scale=scale, line_weight=line_weight, zorder=zorder)
     return
+
 
 def _draw_modification_text(ax, x, y, color, scale=0.1, line_weight=0, zorder=2, text='', white_background=False):
     verts = np.array([
@@ -340,12 +351,12 @@ def _draw_modification_text(ax, x, y, color, scale=0.1, line_weight=0, zorder=2,
         _draw_text(ax, x, y, text, size=0.25, horizontalalignment='left', verticalalignment='center')
     else:
         _draw_text(ax, x, y, text, size=0.25, horizontalalignment='center', verticalalignment='center')
-    #ax.text(x, y, text, horizontalalignment='center',
-    #        verticalalignment='center', size=linewidth_from_data_units(0.25, ax, 'y'))
     return
+
 
 def draw_modification_text(text, white_background=False):
     return functools.partial(_draw_modification_text, text=text, white_background=white_background)
+
 
 def get_non_null_leaves(G):
     '''Get all non-null leaf nodes (i.e. nodes with no children except for a null node).'''
@@ -357,7 +368,7 @@ def get_non_null_leaves(G):
             try:
                 leaf = next(G.predecessors(leaf))
             except StopIteration:
-                new_leaves.append(leaf)    
+                new_leaves.append(leaf)
             if len(non_null_children(G, leaf)) > 0:
                 continue
             elif check_can_draw_above(G, leaf):
@@ -368,6 +379,7 @@ def get_non_null_leaves(G):
         new_leaves.append(leaf)
     return new_leaves
 
+
 def non_null_children(G, node):
     "Return the number of non-null children nodes."
     children = [x for x in G.successors(node) if 
@@ -376,7 +388,7 @@ def non_null_children(G, node):
                 and not check_can_draw_above(G, x)]
     return children
 
-  
+
 def set_parent_node_positions(node_queue, G, node, y_positions, y_min_spacing):
     parent = next(G.predecessors(node), None)
     if parent in y_positions or parent is None:
@@ -394,6 +406,7 @@ def set_parent_node_positions(node_queue, G, node, y_positions, y_min_spacing):
     y_positions[parent] = (max_child + min_child) / 2
     set_parent_node_positions(node_queue, G, parent, y_positions, y_min_spacing)
     return
+
 
 def set_y_positions(G):
     leaves = get_non_null_leaves(G)
@@ -441,6 +454,7 @@ def set_y_positions(G):
             y_positions[node] = child_position
     return y_positions
 
+
 def set_x_positions(G):
     x_max = 0.0
     x_spacing = 1.0
@@ -458,6 +472,7 @@ def set_x_positions(G):
             depth[node] = depth[node] - 1
     x_positions = {x: x_max - (d + 1) * x_spacing for x, d in depth.items()}
     return x_positions
+
 
 def check_can_draw_above(G, node):
     '''Check if node can be drawn above a parent node.
@@ -484,12 +499,12 @@ def check_can_draw_above(G, node):
     # If none of the above conditions trigger, then presume we can plot above
     # parent sugar.
     return True
-    
+
 
 def glycan_tree_layout(G):
     x_pos = set_x_positions(G)
     y_pos = set_y_positions(G)
-    return {i:(x,y_pos[i]) for i, x in x_pos.items()}
+    return {i: (x, y_pos[i]) for i, x in x_pos.items()}
 
 
 def get_edge_label(G, edge):
@@ -508,7 +523,6 @@ def draw_glycan_diagram(G, ax, draw_terminal_connection_labels=False):
     ax.set_aspect('equal')
     ax.axis('off')
     linewidth = linewidth_from_data_units(0.03, ax)
-    #nx.draw_networkx_edges(G, pos, ax=ax)
     node_labels = nx.get_node_attributes(G, 'label')
     for edge in G.edges():
         if node_labels[edge[0]] in MODIFICATION_CODES or node_labels[edge[1]] in MODIFICATION_CODES:
@@ -541,18 +555,12 @@ def draw_glycan_diagram(G, ax, draw_terminal_connection_labels=False):
             node_labels[edge[1]] not in MODIFICATION_CODES:
             _draw_text(ax, np.average(edge_x, weights=(0.3,0.7)) - x_text_offset,
                     np.average(edge_y, weights=(0.3,0.7)) + y_text_offset, ab_label, size=0.25, horizontalalignment=alignment, verticalalignment=v_align)
-            #ax.text(np.average(edge_x, weights=(0.3,0.7)) - x_text_offset,
-            #        np.average(edge_y, weights=(0.3,0.7)) + y_text_offset, ab_label, horizontalalignment=alignment, size=linewidth_from_data_units(0.25, ax, 'y'))
             _draw_text(ax, np.average(edge_x, weights=(0.6,0.4)) - x_text_offset,
                     np.average(edge_y, weights=(0.6,0.4)) + y_text_offset, edge_label[2], size=0.25, horizontalalignment=alignment, verticalalignment=v_align)
-            #ax.text(np.average(edge_x, weights=(0.6,0.4)) - x_text_offset,
-            #        np.average(edge_y, weights=(0.6,0.4)) + y_text_offset, edge_label[2], horizontalalignment=alignment, size=linewidth_from_data_units(0.25, ax, 'y'))
         if draw_terminal_connection_labels and node_labels[edge[1]] in NULL_CODES:
             _draw_text(ax, np.average(edge_x, weights=(0.5,0.5)) - x_text_offset,
                     np.average(edge_y, weights=(0.4,0.6)) + y_text_offset, edge_label[2], size=0.25, horizontalalignment=alignment, verticalalignment=v_align)
-            #ax.text(np.average(edge_x, weights=(0.5,0.5)),
-             #       np.average(edge_y, weights=(0.3,0.7)), edge_label[2], horizontalalignment=alignment, size=linewidth_from_data_units(0.25, ax, 'y'))
-    #First, process nodes with duplicate positions and combine into one (should only be modification codes that are overlayed)
+    # First, process nodes with duplicate positions and combine into one (should only be modification codes that are overlayed)
     reverse_pos_dict = defaultdict(set)
     for node, xy in pos.items():
         reverse_pos_dict[xy].add(node)
@@ -580,6 +588,7 @@ def draw_glycan_diagram(G, ax, draw_terminal_connection_labels=False):
     ax.axis('scaled')
     return ax
 
+
 def _draw_text(ax, x, y, text, size, zorder=2, horizontalalignment='left', verticalalignment='bottom'):
     if not text:
         return
@@ -606,6 +615,7 @@ def _draw_text(ax, x, y, text, size, zorder=2, horizontalalignment='left', verti
                               edgecolor=None, linewidth=0)
     ax.add_patch(patch)
     return
+
 
 def linewidth_from_data_units(linewidth, axis, reference='x'):
     """
@@ -638,5 +648,3 @@ def linewidth_from_data_units(linewidth, axis, reference='x'):
     length *= 72
     # Scale linewidth to value range
     return linewidth * (length / value_range)
-
-

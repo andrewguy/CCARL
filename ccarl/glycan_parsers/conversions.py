@@ -1,14 +1,13 @@
 import networkx as nx
 import numpy as np
 
-from ..glycan_graph_methods import generate_digraph_from_glycan_string
-from ..glycan_plotting import set_x_positions, set_y_positions
-
+from ccarl.glycan_graph_methods import generate_digraph_from_glycan_string
+from ccarl.glycan_plotting import set_x_positions, set_y_positions
 
 
 def cfg_to_kcf(glycan, glycan_id=''):
     '''Convert a glycan string in CFG format to KCF format
-    
+
     Args:
         glycan (str): A glycan string in CFG format.
     Returns:
@@ -23,7 +22,7 @@ def cfg_to_kcf(glycan, glycan_id=''):
     node_dict = nx.get_node_attributes(glycan_graph, 'label')
     edge_dict = nx.get_edge_attributes(glycan_graph, 'label')
     node_str = '\n'.join([f"      {key}  {value}    {x_positions[key] * xscale:.0f}    {(y_positions[key] - y_mid) * yscale:.0f}" \
-        for key, value in sorted(node_dict.items())])
+                          for key, value in sorted(node_dict.items())])
     edge_str = '\n'.join([f"      {i}  {x[0][1]}:{''.join(x[1][0:2])}   {x[0][0]}:{x[1][2]}" for i, x in enumerate(edge_dict.items())])
     kcf_string = (f'ENTRY         Glycan\n'
                   f'NODE  {len(node_dict)}\n'
@@ -31,14 +30,13 @@ def cfg_to_kcf(glycan, glycan_id=''):
                   f'EDGE   {len(edge_dict)}\n'
                   f'{edge_str}\n'
                   f'///\n'
-                 )
+                  )
     return kcf_string
 
 
-                          
 def kcf_to_digraph(kcf_glycan):
     '''Converts a glycan string in KCF format to DiGraph format.
-    
+
     Args:
        kcf_glycan (str): A glycan in KCF string format.
     Returns:
@@ -86,4 +84,3 @@ def kcf_to_digraph(kcf_glycan):
     nx.set_edge_attributes(G, edge_dict)
     nx.set_node_attributes(G, node_dict)
     return G
-            

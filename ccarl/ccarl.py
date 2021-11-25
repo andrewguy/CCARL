@@ -3,10 +3,10 @@ from sklearn.metrics import matthews_corrcoef, make_scorer
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-from .glycan_graph_methods import generate_digraph_from_glycan_string, add_termini_nodes_to_graphs
-from .glycan_features import extract_features_from_glycan_graphs, generate_features_from_subtrees
-from .glycan_graph_methods import get_permitted_connections
-from .stats_utils import mad_based_outlier
+from ccarl.glycan_graph_methods import generate_digraph_from_glycan_string, add_termini_nodes_to_graphs
+from ccarl.glycan_features import extract_features_from_glycan_graphs, generate_features_from_subtrees
+from ccarl.glycan_graph_methods import get_permitted_connections
+from ccarl.stats_utils import mad_based_outlier
 
 
 class CCARLClassifier:
@@ -37,17 +37,18 @@ class CCARLClassifier:
         # Optionally process RFU values into tertiary binding classes.
         self._binding_class = y
         self.glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
-                                                                 format=glycan_format)
+                                                                  format=glycan_format)
                               for x in glycans]
         # Define the allowed linkages for each sugar type
         if self._permitted_connections is None:
             self._permitted_connections = get_permitted_connections(self.glycan_graphs)
-        self.glycan_graphs_with_restriction = add_termini_nodes_to_graphs(self.glycan_graphs, 
+        self.glycan_graphs_with_restriction = add_termini_nodes_to_graphs(
+            self.glycan_graphs,
             permitted_connections=self._permitted_connections)
         mrmr_features, self._mrmr_subtrees, feature_df = extract_features_from_glycan_graphs(
             self.glycan_graphs_with_restriction,
             self._binding_class, self._gbolt_bin, self._mrmr_reader, self._mrmr_bin,
-            support_all=self._support_all, support_pos=self._support_pos, 
+            support_all=self._support_all, support_pos=self._support_pos,
             parent_edge_types=True, num_mrmr_features=self._num_mrmr_features)
 
         mcc_scorer = make_scorer(matthews_corrcoef)
@@ -55,7 +56,7 @@ class CCARLClassifier:
         # Now perform some additional feature selection with L1 regularisation to reduce unimportant features.
         X = feature_df.loc[:, mrmr_features].values
         y = feature_df.iloc[:, 0].astype('bool').astype('int').values
-        
+
         n_folds = 5
         logistic_clf_lasso = LogisticRegressionCV(scoring=mcc_scorer, cv=n_folds, penalty='l1',
                                                   solver='liblinear', class_weight='balanced',
@@ -77,7 +78,7 @@ class CCARLClassifier:
             print("Reverting to original features identified by mRMR.")
             feature_set_reduced = mrmr_features
             freq_subtrees_reduced = self._mrmr_subtrees
-        
+
         # Run logistic regression again on reduced set of features.
         X = feature_df.loc[:, feature_set_reduced].values
         y = feature_df.iloc[:, 0].astype('bool').astype('int').values
@@ -86,7 +87,7 @@ class CCARLClassifier:
             # Drop feature if VIF is inf, but do it stepwise.
             vif = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
 
-            #Indices of features to keep.
+            # Indices of features to keep.
             to_keep = list(range(len(vif)))
 
             for _ in range(len(vif)):
@@ -107,8 +108,6 @@ class CCARLClassifier:
         # Set C to inf to obtain unpenalised logistic regression
         logistic_clf_reduced = LogisticRegression(penalty='l2', C=100, solver='lbfgs',
                                                   class_weight='balanced')
-        #logistic_clf_reduced = LogisticRegressionCV(scoring=mcc_scorer, cv=n_folds, penalty='l2', Cs=100, solver='lbfgs',
-        #                                          class_weight='balanced')
         logistic_clf_reduced.fit(X, y)
         self._model = logistic_clf_reduced
         self.subtree_features = [x['subtree'] for x in freq_subtrees_reduced]
@@ -128,15 +127,16 @@ class CCARLClassifier:
         glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
                                                              format=glycan_format)
                          for x in glycans]
-        glycan_graphs_with_restriction = add_termini_nodes_to_graphs(glycan_graphs, 
+        glycan_graphs_with_restriction = add_termini_nodes_to_graphs(glycan_graphs,
             permitted_connections=self._permitted_connections)
-        features = [generate_features_from_subtrees(self.subtree_features, glycan) for 
+        features = [generate_features_from_subtrees(self.subtree_features, glycan) for
                     glycan in glycan_graphs_with_restriction]
         return features
 
+
 def _calculate_binders(x, thresholds=(2.0, 2.5)):
     '''Calculate positive and intermediate binders using log transformed data.
-    
+
     Args:
         x (np.array): Log RFU counts data.
         pos_threshold (float): Modified z-score threshold for positive binders.
@@ -154,7 +154,7 @@ def _calculate_binders(x, thresholds=(2.0, 2.5)):
 
 def _log_rfu_values(y, shift_data=True):
     '''Return log transformed RFU values for glycan microarray.
-    
+
     Args:
         shift_data (bool): If true, shifts data so that the minimum value is 1
             (applies a shift of min_value + 1 to each data point) before calculating log of data.
@@ -162,7 +162,7 @@ def _log_rfu_values(y, shift_data=True):
         Array: RFU data, log transformed and optionally scaled.
     '''
     if np.count_nonzero(y) == 0:
-        raise ValueError(f"No non-zero values in RFU data.")
+        raise ValueError("No non-zero values in RFU data.")
     if shift_data:
         y = -min(y) + y + 1
     log_y = np.log10(y)

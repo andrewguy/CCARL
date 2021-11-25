@@ -1,13 +1,11 @@
 import networkx as nx
-import numpy as np
 import glob
 import subprocess
 from tempfile import NamedTemporaryFile, _get_candidate_names, gettempdir
 import os
 
-from .glycan_graph_methods import graph_fingerprint
-from .glycan_graph_methods import convert_from_digraph_to_graph
-from .glycan_graph_methods import convert_from_graph_to_digraph
+from ccarl.glycan_graph_methods import convert_from_digraph_to_graph
+from ccarl.glycan_graph_methods import convert_from_graph_to_digraph
 
 
 def write_lg(graphs):
@@ -39,9 +37,9 @@ def write_lg(graphs):
                 n = '[EMPTY_NODE]'
             nodes_output.append("v %i %s\n" % (n, node_label_dict[node_labels_by_nodeid[n]]))
         nodes_output.sort(key=lambda x: int(x.split()[1]))
-        
+
         output_lines.extend(nodes_output)
-        
+
         for edge in graph.edges():
             label = edge_label_dict[edge_labels_by_edgeid[edge]]
             if label is not None:
@@ -51,6 +49,7 @@ def write_lg(graphs):
     node_id_to_label = {v: k for k, v in node_label_dict.items()}
     edge_id_to_label = {v: k for k, v in edge_label_dict.items()}
     return ''.join(output_lines), node_id_to_label, edge_id_to_label
+
 
 def remove_dangling_edges_from_lg(data_string, node_id_to_label, edge_id_to_label):
     '''Preprocessing for linegraph returned by gBolt. Removes all dangling edges.
@@ -74,6 +73,7 @@ def remove_dangling_edges_from_lg(data_string, node_id_to_label, edge_id_to_labe
         if len(vertice_labels) == 2 * len([x for x in vertice_labels if x in direction_vertices]) + 1:
             to_keep.append(graph)
     return 't' + 't'.join(to_keep)
+
 
 def read_lg(data_string, node_id_to_label, edge_id_to_label, remove_dangling=True):
     '''Convert a LineGraph file from gspan into a networkx Graph object.
@@ -121,6 +121,7 @@ def read_lg(data_string, node_id_to_label, edge_id_to_label, remove_dangling=Tru
     graph_list = [{'subtree': graph_map[i], 'parents': original_graphs[i]} for i in graph_map.keys()]
     return graph_list
 
+
 def has_dangling_edges(G):
     '''Check if graph has an unconnected edge.
 
@@ -141,6 +142,7 @@ def has_dangling_edges(G):
             continue
     return is_dangling
 
+
 def run_gbolt(graphs, support=0.05, gbolt_path='gbolt'):
     '''Extract common subtrees using gBolt.
 
@@ -160,10 +162,10 @@ def run_gbolt(graphs, support=0.05, gbolt_path='gbolt'):
         output_name = os.path.join(gettempdir(), next(_get_candidate_names()))
         cmd = '{gbolt} -i {input_filename} -s {support} '\
               '-o {out}  -d '.format(gbolt=gbolt_path,
-                                                              input_filename=input_filename,
-                                                              support=str(support),
-                                                              out=output_name
-                                                              )
+                                     input_filename=input_filename,
+                                     support=str(support),
+                                     out=output_name
+                                     )
         output_file_pattern = output_name + ".t*"
         process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
         output, _ = process.communicate()
@@ -175,6 +177,7 @@ def run_gbolt(graphs, support=0.05, gbolt_path='gbolt'):
             os.remove(file)
     output = read_lg('\n'.join(output_data), node_id_to_label, edge_id_to_label)
     return output
+
 
 def get_frequent_subtrees(digraph_list, support=0.05, gbolt_path='gbolt'):
     '''Extract frequent subtrees from a glycan DiGraph using gBolt.

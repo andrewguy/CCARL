@@ -2,23 +2,24 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 
-from .glycan_graph_methods import generate_digraph_from_glycan_string
-from .frequent_subtrees import get_frequent_subtrees
-from .glycan_graph_methods import find_root_node, add_termini_nodes_to_graphs
-from .feature_selection import run_fast_mrmr
-from .glycan_graph_methods import graph_fingerprint
+from ccarl.glycan_graph_methods import generate_digraph_from_glycan_string
+from ccarl.frequent_subtrees import get_frequent_subtrees
+from ccarl.glycan_graph_methods import find_root_node, add_termini_nodes_to_graphs
+from ccarl.feature_selection import run_fast_mrmr
+from ccarl.glycan_graph_methods import graph_fingerprint
+
 
 def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
     gbolt_path, mrmr_reader, mrmr_bin, support_all=0.05,
     support_pos=0.4, parent_edge_types=False, num_mrmr_features=10):
     '''Get list of features from an initial list of glycans.
-    
+
     Uses MRMR to generate candidate list of motifs from a DiGraph
     representation with null nodes added.
-    
+
     Extraction of frequent subtrees is performed using gBolt, a fast
     implementation of gSpan.
-    
+
     Args:
         glycan_list (list): A list of glycans as networkX DiGraphs.
         binding_class (np.array): Output classes, with 0 indicating no binding
@@ -77,6 +78,7 @@ def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
 
     freq_subtrees_subset = [freq_subtrees_extended[int(x)] for x in feature_set_by_mrmr_extended]
     return feature_set_by_mrmr_extended, freq_subtrees_subset, feature_df_extended
+
 
 def generate_features_from_subtrees(frequent_subtree_features, glycan):
     '''Generate a feature set for an individual glycan based on a set of chosen subtree features.

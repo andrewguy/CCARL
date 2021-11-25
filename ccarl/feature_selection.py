@@ -1,5 +1,5 @@
 
-from tempfile import NamedTemporaryFile, _get_candidate_names, gettempdir
+from tempfile import NamedTemporaryFile
 import subprocess
 import os
 
@@ -25,15 +25,12 @@ def run_fast_mrmr(feature_df, mrmr_bin, mrmr_reader, num_features=10):
     with NamedTemporaryFile(mode='w', delete=False, suffix=suffix) as f:
         feature_df.to_csv(path_or_buf=f, index=False)
         name = f.name
-        prefix = name[:-len(suffix)]
-    tempdir = gettempdir()
-    mrmr_data = os.path.join(tempdir, prefix + '.mrmr')
 
-    os.system('cd {tempdir} && {mrmr_reader} {name}'.format(name=name, mrmr_reader=mrmr_reader, 
-                                                            tempdir=tempdir))
-    os.rename(os.path.join(tempdir, "data.mrmr"), mrmr_data)
-    output = subprocess.check_output('{mrmr_bin} -f {mrmr_data} -a {n}'.format(
-                 n=num_features + 1, mrmr_bin=mrmr_bin, mrmr_data=mrmr_data), shell=True)
+    prefix = name[:-len(suffix)]
+    mrmr_data = prefix + '.mrmr'
+
+    subprocess.run(f'{mrmr_reader} -f {name} -o {mrmr_data}', shell=True)
+    output = subprocess.check_output(f'{mrmr_bin} -f {mrmr_data} -a {num_features}', shell=True)
     os.remove(name)
     os.remove(mrmr_data)
     features = [int(x) for x in output.decode().strip().split(',')]

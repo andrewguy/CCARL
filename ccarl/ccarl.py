@@ -105,8 +105,10 @@ class CCARLClassifier:
                     del(to_keep[to_remove])
                     if len(to_keep) == 1:
                         break
-                    vif = [variance_inflation_factor(X[:, np.array(to_keep)], i)
-                           for i in range(X[:, np.array(to_keep)].shape[1])]
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", message="divide by zero encountered in double_scalars")
+                        vif = [variance_inflation_factor(X[:, np.array(to_keep)], i)
+                               for i in range(X[:, np.array(to_keep)].shape[1])]
                 else:
                     break
 

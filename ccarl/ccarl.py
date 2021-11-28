@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.metrics import matthews_corrcoef, make_scorer
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+import warnings
 
 from ccarl.glycan_graph_methods import generate_digraph_from_glycan_string, add_termini_nodes_to_graphs
 from ccarl.glycan_features import extract_features_from_glycan_graphs, generate_features_from_subtrees
@@ -34,6 +35,7 @@ class CCARLClassifier:
         return
 
     def train(self, glycans, y, glycan_format="CFG", parse_linker=True):
+        warnings.filterwarnings("ignore", message=r"RuntimeWarning: invalid value encountered in double_scalars")
         # Optionally process RFU values into tertiary binding classes.
         self._binding_class = y
         self.glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
@@ -61,8 +63,10 @@ class CCARLClassifier:
         logistic_clf_lasso = LogisticRegressionCV(scoring=mcc_scorer, cv=n_folds, penalty='l1',
                                                   solver='liblinear', class_weight='balanced',
                                                   Cs=100)
-
-        logistic_clf_lasso.fit(X, y)
+        # MCC function handles NaN values anyway, which is where this warning pops up
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="invalid value encountered in double_scalars")
+            logistic_clf_lasso.fit(X, y)
         # For l1 regularisation, C needs to scale inversely with class size.
         # i.e. with more data samples, the best C value is proportionally less.
         best_C_scaled = logistic_clf_lasso.C_[0] * (1 - 1 / n_folds)
@@ -85,7 +89,10 @@ class CCARLClassifier:
         if X.shape[1] > 1:
             # Calculate Variance Inflation Factors, and remove redundant features
             # Drop feature if VIF is inf, but do it stepwise.
-            vif = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
+            # We will handle divide by zero errors later
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="divide by zero encountered in double_scalars")
+                vif = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
 
             # Indices of features to keep.
             to_keep = list(range(len(vif)))
@@ -98,7 +105,8 @@ class CCARLClassifier:
                     del(to_keep[to_remove])
                     if len(to_keep) == 1:
                         break
-                    vif = [variance_inflation_factor(X[:,np.array(to_keep)], i) for i in range(X[:,np.array(to_keep)].shape[1])]
+                    vif = [variance_inflation_factor(X[:, np.array(to_keep)], i)
+                           for i in range(X[:, np.array(to_keep)].shape[1])]
                 else:
                     break
 
@@ -128,7 +136,7 @@ class CCARLClassifier:
                                                              format=glycan_format)
                          for x in glycans]
         glycan_graphs_with_restriction = add_termini_nodes_to_graphs(glycan_graphs,
-            permitted_connections=self._permitted_connections)
+                                                                     self._permitted_connections)
         features = [generate_features_from_subtrees(self.subtree_features, glycan) for
                     glycan in glycan_graphs_with_restriction]
         return features

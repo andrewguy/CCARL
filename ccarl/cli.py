@@ -16,7 +16,21 @@ from ccarl.validate_cfg_structures import (ArrayMismatchError,
                                            validate_cfg_structures)
 
 
-@click.command()
+@click.group()
+def cli():
+    '''A collection of utilities for processing glycan microarray data.
+
+    If you are starting with CFG data, it is recommended to first clean
+    your data with `ccarl validate-structures`, and then identify binding
+    glycans using median absolute deviation values using `ccarl identify-binders`.
+    From here you can identify motifs (and build a predictive model) using
+    `ccarl identify-motifs`.
+    Finally, you can predict the binding of unknown glycans using `ccarl predict-binding`.
+    '''
+    pass
+
+
+@cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
 @click.option('--cfg_version', default='',
@@ -46,7 +60,7 @@ def validate_structures(input, output, cfg_version, levenshtein_threshold, verbo
     return
 
 
-@click.command()
+@cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
 @click.option('--zscore_low', default=1.5,
@@ -84,7 +98,7 @@ def identify_binders(input, output, zscore_low, zscore_high, histogram):
     return
 
 
-@click.command()
+@cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output_prefix', type=click.Path(exists=False, dir_okay=False), required=True)
 @click.option('--support_positive', default=0.4,
@@ -156,7 +170,7 @@ def output_results_for_training(cf, train, test=None, title=''):
     return
 
 
-@click.command()
+@cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('model', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)

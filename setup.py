@@ -77,10 +77,7 @@ setup(
     },
     entry_points={
               'console_scripts': [
-                  'ccarl-validate-cfg-structures = ccarl.cli:validate_structures',
-                  'ccarl-identify-binders = ccarl.cli:identify_binders',
-                  'ccarl-identify-motifs = ccarl.cli:identify_motifs',
-                  'ccarl-predict-binding = ccarl.cli:predict_binding'
+                  'ccarl = ccarl.cli:cli'
               ]
           }
 )

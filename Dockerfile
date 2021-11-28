@@ -3,6 +3,10 @@ LABEL maintainer="Andrew Guy"
 
 ENV DEBIAN_FRONTEND noninteractive
 
+WORKDIR /app
+
+COPY . .
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-pip \
         build-essential \
@@ -36,4 +40,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pyxdameraulevenshtein \
         click \
         pyparsing && \
-    apt-get purge -y --auto-remove cmake build-essential libboost-all-dev git
+    python3 /app/setup.py install && \
+    apt-get purge -y --auto-remove cmake git
+
+ENTRYPOINT [ "ccarl" ]
+CMD ["--help"]

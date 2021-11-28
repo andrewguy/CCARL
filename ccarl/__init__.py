@@ -7,7 +7,7 @@ potential linkages is explicitly modelled, allowing the tool to distinguish betw
 motifs and otherwise identical motifs within the core of a glycan.
 """
 
-from .ccarl import CCARLClassifier
+from ccarl.ccarl import CCARLClassifier
 
 
 __version__ = '1.0.0'

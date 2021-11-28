@@ -53,7 +53,8 @@ setup(
                       'matplotlib',
                       'statsmodels',
                       'pyxdameraulevenshtein',
-                      'pyparsing'
+                      'pyparsing',
+                      'click'
                       ],
     cmdclass={'test': PyTest},
     author_email='andrewjguy42@gmail.com',
@@ -79,6 +80,7 @@ setup(
                   'ccarl-validate-cfg-structures = ccarl.cli:validate_structures',
                   'ccarl-identify-binders = ccarl.cli:identify_binders',
                   'ccarl-identify-motifs = ccarl.cli:identify_motifs',
+                  'ccarl-predict-binding = ccarl.cli:predict_binding'
               ]
           }
 )

@@ -20,7 +20,7 @@ from ccarl.validate_cfg_structures import (ArrayMismatchError,
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
 @click.option('--cfg_version', default='',
-              help='CFG array version number. If present, will check that glycan strings provided roughly match array version.')
+              help='CFG array version number. Will check that glycan strings provided roughly match array version.')
 @click.option('--levenshtein_threshold', type=float, default=10,
               help='Total Levenshtein distance threshold for calling a match.')
 @click.option('-v', '--verbose', is_flag=True,

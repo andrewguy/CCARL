@@ -1,8 +1,8 @@
 import networkx as nx
 from collections import defaultdict
 
-from .glycan_parsers.cfg_parser import CFGGlycanParser
-from .glycan_parsers.gsl_parser import GSLGlycanParser
+from ccarl.glycan_parsers.cfg_parser import CFGGlycanParser
+from ccarl.glycan_parsers.gsl_parser import GSLGlycanParser
 
 parsers = {
     'CFG': CFGGlycanParser(),

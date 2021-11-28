@@ -1,7 +1,7 @@
 import io
 import os
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 # Version is defined in ccarl/__init__.py
@@ -60,8 +60,9 @@ setup(
     author_email='andrewjguy42@gmail.com',
     description='A package for identification of glycan motifs',
     long_description=LONG_DESCRIPTION,
-    packages=['ccarl'],
+    packages=find_packages(),
     include_package_data=True,
+    package_data={'ccarl': ['glycan_parsers/CFG_Array_Versions/*.csv']},
     platforms='any',
     classifiers=[
         'Programming Language :: Python',

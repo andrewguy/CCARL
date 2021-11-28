@@ -22,7 +22,7 @@ that array version.
 
 import logging
 
-from .glycan_parsers.cfg_array_versions import get_likely_cfg_array_version
+from ccarl.glycan_parsers.cfg_array_versions import get_likely_cfg_array_version
 
 logger = logging.getLogger(__name__)
 

@@ -99,10 +99,8 @@ def identify_binders(input, output, zscore_low, zscore_high, histogram):
               help='Plot ROC curves')
 @click.option('--save_model', is_flag=True,
               help='Save model as a Pickle file')
-@click.option('-v', '--verbose', is_flag=True,
-              help='Verbose output.')
 def identify_motifs(input, output_prefix, support_positive, support_all, format, cross_validation,
-                    plot_roc, verbose, save_model):
+                    plot_roc, save_model):
     '''Extract glycan motifs from glycan microarray data.
 
     Requires a CSV file containing 'Structure' and 'Binding' columns.
@@ -132,8 +130,8 @@ def identify_motifs(input, output_prefix, support_positive, support_all, format,
         plot_test_training_roc(ax, cf, csv_data, test_df=None)
         fig.savefig(f"{output_prefix}_ROC_curve_full_data.svg")
     if save_model:
-        with open(f"{output_prefix}_model.pkl", mode='w') as f:
-            pickle.dump(f, cf)
+        with open(f"{output_prefix}_model.pkl", mode='wb') as f:
+            pickle.dump(cf, f)
 
 
 def output_results_for_training(cf, train, test=None, title=''):
@@ -155,4 +153,28 @@ def output_results_for_training(cf, train, test=None, title=''):
         auc_value = auc(fpr, tpr)
         print(f"AUC Value (Test): {auc_value: 0.4f}")
     print("\n")
+    return
+
+
+@click.command()
+@click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
+@click.argument('model', type=click.Path(exists=True, dir_okay=False), required=True)
+@click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
+@click.option('--format', default='CFG',
+              help='Glycan string format for input file. Currently only CFG is supported.')
+def predict_binding(input, model, output, format):
+    '''Predict binding of unknown glycans from model trained on glycan microarray data.
+
+    Requires a previously trained model file (a Python pickle object).
+    Use ccarl-identify-motifs with the --save_model flag to generate a trained model.
+
+    Requires a CSV file containing a 'Structure' column.
+    Will output binding probability to a csv file.
+    '''
+    csv_data = pd.read_csv(input)
+    with open(model, 'rb') as f:
+        cf = pickle.load(f)
+    preds = cf.predict_proba(csv_data.Structure, glycan_format=format)
+    csv_data['Binding_Probability'] = preds[:, 1]
+    csv_data.to_csv(output, index=False, float_format='%1.3g')
     return

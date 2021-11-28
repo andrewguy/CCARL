@@ -125,16 +125,16 @@ class CCARLClassifier:
         self._training_classes = y
         return
 
-    def predict(self, glycans, glycan_format="CFG"):
-        features = self._generate_features(glycans, glycan_format)
+    def predict(self, glycans, glycan_format="CFG", parse_linker=True):
+        features = self._generate_features(glycans, glycan_format, parse_linker=parse_linker)
         return self._model.predict(features)
 
-    def predict_proba(self, glycans, glycan_format="CFG"):
-        features = self._generate_features(glycans, glycan_format)
+    def predict_proba(self, glycans, glycan_format="CFG", parse_linker=True):
+        features = self._generate_features(glycans, glycan_format, parse_linker=parse_linker)
         return self._model.predict_proba(features)
 
-    def _generate_features(self, glycans, glycan_format="CFG"):
-        glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
+    def _generate_features(self, glycans, glycan_format="CFG", parse_linker=True):
+        glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=parse_linker,
                                                              format=glycan_format)
                          for x in glycans]
         glycan_graphs_with_restriction = add_termini_nodes_to_graphs(glycan_graphs,

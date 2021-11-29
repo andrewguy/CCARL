@@ -39,7 +39,7 @@ docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.0.0 identify-motifs /data/ConA
 To perform binding prediction on unknown glycans:
 
 ```bash
-docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.0.0 predict_binding /data/tests/test_data/test_unknowns.csv /data/ConA.results.model.pkl /data/ConA.predicted.csv
+docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.0.0 predict-binding /data/tests/test_data/test_unknowns.csv /data/ConA.results.model.pkl /data/ConA.predicted.csv
 ```
 
 ## Local Installation

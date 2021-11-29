@@ -11,6 +11,7 @@ Additionally, it can also be used to classify binding to glycans with unknown bi
 ## Docker Container
 
 The easiest way to run the CCARL tool is to use the provided Docker container which provides easy access to the CCARL command-line scripts:
+
 ```bash
 docker pull andrewguy/ccarl:v1.0.0
 
@@ -30,8 +31,9 @@ docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.0.0 identify-binders /data/Con
 ```
 
 To identify binding motifs from binary binding data, performing 5-fold cross-validation, plotting ROC curves and saving the model trained on the entire dataset:
+
 ```bash
-docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.0.0 identify-motifs /data/ConA.binders.csv /data/ConA.results --cross_validation --plot_roc --save_model
+docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.0.0 identify-motifs /data/ConA.binders.csv /data/ConA.results --cross-validation --plot-roc --save-model
 ```
 
 To perform binding prediction on unknown glycans:
@@ -82,4 +84,4 @@ cf.train(csv_data.Structure, csv_data.Binding.to_numpy(dtype=int))
 
 If you use this tool in any of your work, please cite:
 
-Coff, L., Chan, J., Ramsland, P.A., Guy, A.J.  Identifying glycan motifs using a novel subtree mining approach. BMC Bioinformatics 21, 42 (2020). https://doi.org/10.1186/s12859-020-3374-4
+Coff, L., Chan, J., Ramsland, P.A., Guy, A.J.  Identifying glycan motifs using a novel subtree mining approach. BMC Bioinformatics 21, 42 (2020). [https://doi.org/10.1186/s12859-020-3374-4](https://doi.org/10.1186/s12859-020-3374-4)

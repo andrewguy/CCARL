@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import auc, roc_curve
 
-from ccarl.ccarl import CCARLClassifier, _calculate_binders, _log_rfu_values
+from ccarl import CCARLClassifier
+from ccarl.ccarl import _calculate_binders, _log_rfu_values
 from ccarl.glycan_graph_methods import digraph_to_glycan_string
 from ccarl.plotting.features import render_features_pdf
 from ccarl.plotting.metrics import plot_kfold_test_training_roc, plot_test_training_roc

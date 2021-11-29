@@ -36,7 +36,7 @@ class CCARLClassifier:
 
     def train(self, glycans, y, glycan_format="CFG", parse_linker=True):
         self._binding_class = y
-        self.glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
+        self.glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=parse_linker,
                                                                   format=glycan_format)
                               for x in glycans]
         # Define the allowed linkages for each sugar type

@@ -9,7 +9,7 @@ from pyxdameraulevenshtein import damerau_levenshtein_distance, normalized_damer
 
 cfg_array_versions = {}
 dirname = os.path.dirname(__file__)
-DATA_DIR = os.path.join(dirname, './CFG_Array_Versions/')
+DATA_DIR = os.path.join(dirname, 'CFG_Array_Versions')
 
 for filename in os.listdir(DATA_DIR):
     if filename.endswith('.csv'):

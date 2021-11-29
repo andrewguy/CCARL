@@ -35,8 +35,6 @@ class CCARLClassifier:
         return
 
     def train(self, glycans, y, glycan_format="CFG", parse_linker=True):
-        warnings.filterwarnings("ignore", message=r"RuntimeWarning: invalid value encountered in double_scalars")
-        # Optionally process RFU values into tertiary binding classes.
         self._binding_class = y
         self.glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True,
                                                                   format=glycan_format)

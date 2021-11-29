@@ -125,6 +125,12 @@ The top 3 motifs are shown below:
     <img src="./img/ConA.motifs.top3.png" alt="Concanavalin A motifs" width="50%" class="center"/>
 </p>
 
+The model ROC curves (calculated for 5-fold cross-validation) show that this model has excellent performance, with little evidence of overfitting. It is worth examining the motifs identified for each fold of the cross-validation, as there can be some variation between folds.
+
+<p align="center">
+    <img src="./img/ConA.results.ROC_curves_CV.svg" alt="Concanavalin A ROC curves" width="50%" class="center"/>
+</p>
+
 ### __Prediction of Binding__
 
 We can use the model generated (and saved) in the previous step to predict the binding of a different set of glycans. In this example we are just using a small subset of glycans from one of the CFG microarrays, although you can use any glycan that is provided in CFG format (they don't have to be covered by any of the arrays).

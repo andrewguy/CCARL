@@ -41,7 +41,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         click \
         pyparsing && \
     python3 /app/setup.py install && \
-    apt-get purge -y --auto-remove cmake git
+    apt-get purge -y --auto-remove build-essential cmake git && \
+    rm -r /app
+
+RUN useradd -l -m -s /bin/bash -N -u 1000 user && \
+    mkdir /data && \
+    chown 1000:100 /data
+
+USER 1000
+
+WORKDIR /data
 
 ENTRYPOINT [ "ccarl" ]
 CMD ["--help"]

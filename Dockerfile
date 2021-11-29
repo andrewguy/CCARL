@@ -38,8 +38,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pyxdameraulevenshtein \
         click \
         pyparsing && \
-    git clone https://github.com/andrewguy/CCARL.git && \
-    python3 ./CCARL/setup.py install && \
+    git clone https://github.com/andrewguy/CCARL.git && cd CCARL && \
+    python3 setup.py install && \
     apt-get purge -y --auto-remove build-essential cmake git && \
     rm -r /app
 

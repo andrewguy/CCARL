@@ -2,16 +2,15 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 
-from ccarl.glycan_graph_methods import generate_digraph_from_glycan_string
 from ccarl.frequent_subtrees import get_frequent_subtrees
-from ccarl.glycan_graph_methods import find_root_node, add_termini_nodes_to_graphs
+from ccarl.glycan_graph_methods import find_root_node
 from ccarl.feature_selection import run_fast_mrmr
 from ccarl.glycan_graph_methods import graph_fingerprint
 
 
-def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
-    gbolt_path, mrmr_reader, mrmr_bin, support_all=0.05,
-    support_pos=0.4, parent_edge_types=False, num_mrmr_features=10):
+def extract_features_from_glycan_graphs(glycan_graphs, binding_class, gbolt_path, mrmr_reader, mrmr_bin,
+                                        support_all=0.05, support_pos=0.4, parent_edge_types=False,
+                                        num_mrmr_features=10):
     '''Get list of features from an initial list of glycans.
 
     Uses MRMR to generate candidate list of motifs from a DiGraph
@@ -27,7 +26,7 @@ def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
         gbolt_path (str): Path to gbolt executable.
         mrmr_reader_path (str): Path to fast-mrmr reader executable.
         mrmr_bin_dir (str): Path to directory containing fast-mrmr executable.
-        support_all (float, optional): Minimum support threshold for finding 
+        support_all (float, optional): Minimum support threshold for finding
             subtrees in all glycans.
         support_pos (float, optional): Minimum support threshold for finding
             subtrees in positive glycans.
@@ -64,17 +63,18 @@ def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
     feature_df.insert(0, 'class', binding_class)
     # Select top features using mRMR algorithm, using the fast-mrmr implementation.
     feature_set_by_mrmr = run_fast_mrmr(feature_df, mrmr_bin=mrmr_bin,
-        mrmr_reader=mrmr_reader, num_features=num_mrmr_features)
-    
+                                        mrmr_reader=mrmr_reader,
+                                        num_features=num_mrmr_features)
+
     # Don't calculate parent edge types.
     if not parent_edge_types:
         freq_subtrees_subset = [freq_subtrees[int(x)] for x in feature_set_by_mrmr]
         return feature_set_by_mrmr, freq_subtrees_subset, feature_df
-    
-    feature_df_extended, freq_subtrees_extended = get_parent_edge_type_features(feature_df,
-        feature_set_by_mrmr, freq_subtrees, glycan_graphs)
+
+    feature_df_extended, freq_subtrees_extended = get_parent_edge_type_features(feature_df, feature_set_by_mrmr,
+                                                                                freq_subtrees, glycan_graphs)
     feature_set_by_mrmr_extended = run_fast_mrmr(feature_df_extended, mrmr_bin=mrmr_bin,
-        mrmr_reader=mrmr_reader, num_features=num_mrmr_features)
+                                                 mrmr_reader=mrmr_reader, num_features=num_mrmr_features)
 
     freq_subtrees_subset = [freq_subtrees_extended[int(x)] for x in feature_set_by_mrmr_extended]
     return feature_set_by_mrmr_extended, freq_subtrees_subset, feature_df_extended
@@ -131,9 +131,9 @@ def generate_features_from_subtrees(frequent_subtree_features, glycan):
 
 def get_parent_edge_type_features(feature_df, selected_features, frequent_subtrees, glycan_graphs):
     '''Get a list of new features based on the edge type of parent connections.
-    
+
     Edge type will typically be 'alpha', 'beta', or 'unknown_link'.
-    
+
     Args:
         feature_df (DataFrame): A feature dataframe that contains all extracted features.
         selected_features (list): A list of feature column ids for currently selected features.
@@ -141,9 +141,9 @@ def get_parent_edge_type_features(feature_df, selected_features, frequent_subtre
             feature ids.
         glycan_graphs (list): A list of all original glycan DiGraphs.
     Returns:
-        DataFrame: An updated feature DataFrame containing all old features plus new 
+        DataFrame: An updated feature DataFrame containing all old features plus new
             features based on parent linkage type.
-        list: A list of all frequent subtrees, where indexes match column labels in returned 
+        list: A list of all frequent subtrees, where indexes match column labels in returned
             feature DataFrame.
     '''
     feature_df_new = feature_df.copy()
@@ -151,7 +151,7 @@ def get_parent_edge_type_features(feature_df, selected_features, frequent_subtre
 
     nm = nx.isomorphism.categorical_node_match('label', None)
     em = nx.isomorphism.categorical_edge_match('label', None)
-    
+
     link_types = ('alpha', 'beta', 'unknown_link')
     edge_labels = ('a', 'b', '')
 
@@ -160,13 +160,13 @@ def get_parent_edge_type_features(feature_df, selected_features, frequent_subtre
         G = frequent_subtrees[int(selected_feature)]['subtree']
         root_node = find_root_node(G)
         next_node_id = max(G.nodes()) + 1
-        
+
         parent_feats = [np.zeros((1, len(glycan_graphs)), dtype='int') for _ in link_types]
         parent_graphs = [G.copy() for _ in link_types]
-        
+
         for parent_graph, link_type in zip(parent_graphs, link_types):
             parent_graph.add_node(next_node_id, label=link_type)
-            parent_graph.add_edge(next_node_id, root_node, label=('','',''))
+            parent_graph.add_edge(next_node_id, root_node, label=('', '', ''))
 
         for main_graph_id in frequent_subtrees[int(selected_feature)]['parents']:
             main_graph = glycan_graphs[main_graph_id]
@@ -195,16 +195,16 @@ def get_parent_edge_type_features(feature_df, selected_features, frequent_subtre
             # Some rows were probably dropped when removing intermediate binders.
             feature_df_new[new_column_label] = parent_feat[0, feature_df_new.index]
             extended_frequent_subtrees.append({'parents': list(np.where(parent_feat == 1)[1]),
-                                           'subtree': parent_graph})
+                                              'subtree': parent_graph})
     return feature_df_new, frequent_subtrees + extended_frequent_subtrees
 
 
 def get_all_frequent_subtrees(glycan_graphs, binding_class, support_all=0.05,
-    support_pos=0.3, gbolt_path='gbolt'):
+                              support_pos=0.3, gbolt_path='gbolt'):
     '''Gets all frequent subtrees from both all and only positive graphs.
-    
+
     Uses different thresholds for each.
-    
+
     Args:
         glycan_graphs (list): A list of glycan graphs as nx.DiGraph objects.
         binding_class (np.array): A numpy array of binding classes, where
@@ -219,33 +219,33 @@ def get_all_frequent_subtrees(glycan_graphs, binding_class, support_all=0.05,
             that contain that subgraph are given in a list under the 'parents'
             key.
         '''
-    glycan_graphs_pos = [glycan for glycan, binding in 
+    glycan_graphs_pos = [glycan for glycan, binding in
                          zip(glycan_graphs, binding_class) if binding == 1]
-    frequent_subtrees_pos = get_frequent_subtrees(glycan_graphs_pos, 
-                                                  gbolt_path=gbolt_path, 
+    frequent_subtrees_pos = get_frequent_subtrees(glycan_graphs_pos,
+                                                  gbolt_path=gbolt_path,
                                                   support=support_pos)
     positive_indices = np.where(binding_class == 1)[0]
     for frequent_subtree in frequent_subtrees_pos:
-        frequent_subtree['parents'] = [positive_indices[x] for x in 
+        frequent_subtree['parents'] = [positive_indices[x] for x in
                                        frequent_subtree['parents']]
     # Get frequent subtrees using gBolt.
     # Default support is set to 5%.
     # Seems to be a reasonable threshold that doesn't miss important subtrees.
-    frequent_subtrees = get_frequent_subtrees(glycan_graphs, 
-                                              gbolt_path=gbolt_path, 
+    frequent_subtrees = get_frequent_subtrees(glycan_graphs,
+                                              gbolt_path=gbolt_path,
                                               support=support_all)
-    #Initial filtering to remove duplicates
+    # Initial filtering to remove duplicates
     graph_fingerprints_main = set(graph_fingerprint(x['subtree']) for x in frequent_subtrees)
     graph_fingerprints_positive = [graph_fingerprint(x['subtree']) for x in frequent_subtrees_pos]
     new_subtrees = []
     for i, fingerprint in enumerate(graph_fingerprints_positive):
         if fingerprint not in graph_fingerprints_main:
             new_subtrees.append(frequent_subtrees_pos[i])
-            
+
     nm = nx.isomorphism.categorical_node_match('label', None)
     em = nx.isomorphism.categorical_edge_match('label', None)
-    
-    #For new subtrees, find all parents graphs 
+
+    # For new subtrees, find all parents graphs
     for new_subtree in new_subtrees:
         parents = new_subtree['parents']
         for i, main_graph in enumerate(glycan_graphs):

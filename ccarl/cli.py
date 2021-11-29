@@ -3,11 +3,13 @@ import pickle
 
 import click
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from sklearn.metrics import auc, roc_curve
 
 from ccarl.ccarl import CCARLClassifier, _calculate_binders, _log_rfu_values
 from ccarl.glycan_graph_methods import digraph_to_glycan_string
+from ccarl.plotting.features import render_features_pdf
 from ccarl.plotting.metrics import plot_kfold_test_training_roc, plot_test_training_roc
 from ccarl.plotting.microarray import plot_log_rfu_histogram
 from ccarl.plotting.utils import remove_top_right_borders
@@ -33,9 +35,9 @@ def cli():
 @cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
-@click.option('--cfg_version', default='',
+@click.option('--cfg-version', default='',
               help='CFG array version number. Will check that glycan strings provided roughly match array version.')
-@click.option('--levenshtein_threshold', type=float, default=10,
+@click.option('--levenshtein-threshold', type=float, default=10,
               help='Total Levenshtein distance threshold for calling a match.')
 @click.option('-v', '--verbose', is_flag=True,
               help='Verbose output. Will print number of mismatches to stdout.')
@@ -63,19 +65,23 @@ def validate_structures(input, output, cfg_version, levenshtein_threshold, verbo
 @cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
-@click.option('--zscore_low', default=1.5,
-              help='Z-score threshold for negative binders')
-@click.option('--zscore_high', default=3.5,
-              help='Z-score threshold for positive binders')
+@click.option('--zscore-low', default=1.5,
+              help='Z-score threshold for negative binders (default: 1.5)')
+@click.option('--zscore-high', default=3.5,
+              help='Z-score threshold for positive binders (default: 3.5)')
 @click.option('--histogram', type=click.Path(exists=False, dir_okay=False), required=False,
-              help='Filename for histogram of binding levels.')
+              help='Filename for histogram of binding levels. Format is determined by file extension.')
 def identify_binders(input, output, zscore_low, zscore_high, histogram):
     '''Identify binding and non-binding glycans from glycan microarray data.
 
     Takes a CSV file as input. CSV input file must contain a column labelled 'RFU'.
     Writes an output CSV file with an additional 'Binding' column with binary 0 or 1 indicators of binding.
-    Intermediate/indeterminate binding glycans will not be written to the output CSV file.
-    Set zscore_low = zscore_high if you want to ignore intermediate
+
+    Glycan binding/non-binding is calculated using Median Absolute Deviation.
+
+    Glycans that fall between zscore_low and zscore_high will be classed as "intermediate" binders. These
+    will not be written to the output CSV file, and will be ignored for subsequent analyses.
+    If you don't want this behaviour, set zscore_high and zscore_low to the same value.
     '''
     logger = logging.getLogger(__name__)
     _setup_logging()
@@ -89,6 +95,7 @@ def identify_binders(input, output, zscore_low, zscore_high, histogram):
 
     csv_data_subset = csv_data[csv_data.ternary_binding_class != 1].copy()
     csv_data_subset['Binding'] = csv_data_subset['ternary_binding_class'].astype(bool).astype(int)
+    csv_data_subset.drop(columns=['ternary_binding_class'], inplace=True)
     csv_data_subset.to_csv(output, index=False)
     if histogram:
         fig, ax = plt.subplots()
@@ -101,20 +108,22 @@ def identify_binders(input, output, zscore_low, zscore_high, histogram):
 @cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output_prefix', type=click.Path(exists=False, dir_okay=False), required=True)
-@click.option('--support_positive', default=0.4,
-              help='Support threshold for frequent subtree mining the positive binding set')
-@click.option('--support_all', default=0.05,
-              help='Support threshold for frequent subtree mining all glycans')
+@click.option('--support-positive', default=0.4,
+              help='Support threshold for frequent subtree mining the positive binding set (default=0.4)')
+@click.option('--support-all', default=0.05,
+              help='Support threshold for frequent subtree mining all glycans (default=0.05)')
 @click.option('--format', default='CFG',
-              help='Glycan string format for input file. Currently only CFG is supported.')
-@click.option('--cross_validation', is_flag=True,
+              help='Glycan string format for input file. Currently only CFG is supported. (default=CFG)')
+@click.option('--cross-validation', is_flag=True,
               help='Run 5-fold cross-validation to assess model performance.')
-@click.option('--plot_roc', is_flag=True,
+@click.option('--plot-roc', is_flag=True,
               help='Plot ROC curves')
-@click.option('--save_model', is_flag=True,
+@click.option('--save-model', is_flag=True,
               help='Save model as a Pickle file')
+@click.option('--render-motifs', is_flag=True,
+              help='Save PDF of motifs as SNFG-style drawings')
 def identify_motifs(input, output_prefix, support_positive, support_all, format, cross_validation,
-                    plot_roc, save_model):
+                    plot_roc, save_model, render_motifs):
     '''Extract glycan motifs from glycan microarray data.
 
     Requires a CSV file containing 'Structure' and 'Binding' columns.
@@ -138,21 +147,21 @@ def identify_motifs(input, output_prefix, support_positive, support_all, format,
     if plot_roc and cross_validation:
         fig, ax = plt.subplots(figsize=(4, 3))
         plot_kfold_test_training_roc(ax, models, *zip(*folds))
-        fig.savefig(f"{output_prefix}_ROC_curves_CV.svg")
+        fig.savefig(f"{output_prefix}.ROC_curves_CV.svg", bbox_inches="tight")
     if plot_roc:
         fig, ax = plt.subplots(figsize=(4, 3))
         plot_test_training_roc(ax, cf, csv_data, test_df=None)
-        fig.savefig(f"{output_prefix}_ROC_curve_full_data.svg")
+        fig.savefig(f"{output_prefix}.ROC_curve_full_data.svg", bbox_inches="tight")
     if save_model:
-        with open(f"{output_prefix}_model.pkl", mode='wb') as f:
+        with open(f"{output_prefix}.model.pkl", mode='wb') as f:
             pickle.dump(cf, f)
+    if render_motifs:
+        render_features_pdf(cf, f"{output_prefix}.features.pdf")
 
 
-def output_results_for_training(cf, train, test=None, title=''):
+def output_results_for_training(cf, train=None, test=None, title=''):
     print(title)
     coefs = cf._model.coef_[0]
-    fpr, tpr, _ = roc_curve(train.Binding, cf.predict_proba(train.Structure)[:, 1], drop_intermediate=False)
-    auc_value = auc(fpr, tpr)
     sorted_coefs, sorted_features = zip(*sorted(zip(coefs, cf.subtree_features), key=lambda x: -x[0]))
     print("Features:\n")
     for i, feature in enumerate(sorted_features):
@@ -161,7 +170,10 @@ def output_results_for_training(cf, train, test=None, title=''):
     print("\nModel coefficients:\n")
     for i, coef in enumerate(sorted_coefs):
         print(f"Feature {i+1} model coefficient: {coef: 0.3f}")
-    print(f"\nAUC Value (Train): {auc_value: 0.4f}")
+    if train is not None:
+        fpr, tpr, _ = roc_curve(train.Binding, cf.predict_proba(train.Structure)[:, 1], drop_intermediate=False)
+        auc_value = auc(fpr, tpr)
+        print(f"\nAUC Value (Train): {auc_value: 0.4f}")
     if test is not None:
         fpr, tpr, _ = roc_curve(test.Binding, cf.predict_proba(test.Structure)[:, 1], drop_intermediate=False)
         auc_value = auc(fpr, tpr)
@@ -175,12 +187,14 @@ def output_results_for_training(cf, train, test=None, title=''):
 @click.argument('model', type=click.Path(exists=True, dir_okay=False), required=True)
 @click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
 @click.option('--format', default='CFG',
-              help='Glycan string format for input file. Currently only CFG is supported.')
-def predict_binding(input, model, output, format):
+              help='Glycan string format for input file. Currently only CFG is supported (default=CFG).')
+@click.option('-v', '--verbose', is_flag=True,
+              help='Verbose output. Will print model details to stdout.')
+def predict_binding(input, model, output, format, verbose):
     '''Predict binding of unknown glycans from model trained on glycan microarray data.
 
     Requires a previously trained model file (a Python pickle object).
-    Use ccarl-identify-motifs with the --save_model flag to generate a trained model.
+    Use ccarl identify-motifs with the --save_model flag to generate a trained model.
 
     Requires a CSV file containing a 'Structure' column.
     Will output binding probability to a csv file.
@@ -190,5 +204,18 @@ def predict_binding(input, model, output, format):
         cf = pickle.load(f)
     preds = cf.predict_proba(csv_data.Structure, glycan_format=format)
     csv_data['Binding_Probability'] = preds[:, 1]
+    add_features_to_df(csv_data, cf, glycan_format=format)
     csv_data.to_csv(output, index=False, float_format='%1.3g')
+    if verbose:
+        output_results_for_training(cf, title="----Model Details----\n")
+        print(f"Binding predictions saved to {output}")
+    return
+
+
+def add_features_to_df(csv_data, model, glycan_format='CFG', parse_linker=True):
+    '''Add feature columns to DataFrame'''
+    features = model._generate_features(csv_data.Structure, glycan_format=glycan_format, parse_linker=parse_linker)
+    features = np.array(features)
+    for i, idx in enumerate(np.argsort(-model._model.coef_[0])):
+        csv_data[f'Feature_{i+1}'] = features[:, idx]
     return

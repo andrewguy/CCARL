@@ -82,7 +82,7 @@ def extract_features_from_glycan_graphs(glycan_graphs, binding_class,
 
 def generate_features_from_subtrees(frequent_subtree_features, glycan):
     '''Generate a feature set for an individual glycan based on a set of chosen subtree features.
-    
+
     Args:
         frequent_subtree_features (list): A list of frequent subtree features.
         glycan (DiGraph): A candidate glycan in nx.DiGraph format (with null nodes).

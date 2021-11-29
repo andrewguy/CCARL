@@ -50,7 +50,7 @@ def validate_cfg_structures(input_df, cfg_version='', levenshtein_threshold=2.0,
         log.error(msg)
         raise ArrayMismatchError(msg)
     log.info(f"Matched array version is {array_ver} with {mismatches} mismatches " +
-             f"and total levenshtein distance of {sum_lev}.")
+             f"and total levenshtein distance of {sum_lev:0.4f}.")
     csv_data = input_df.copy()
     csv_data.Structure = glycans
     csv_data.attrs['cfg_version'] = array_ver

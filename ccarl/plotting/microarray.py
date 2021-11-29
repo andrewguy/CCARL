@@ -20,9 +20,11 @@ def plot_log_rfu_histogram(x, binding_classes, ax, title='', legend=False):
     data_int = x[binding_classes == 1]
     ax.hist(data_neg, bins=np.arange(min(data_neg), max(data_neg) + binwidth, binwidth))
     # Sometimes there aren't any intermediates or positives...
+    legend = ['Negative', 'Positive']
     if len(data_int) != 0:
         bins = np.arange(min(data_int), max(data_int) + binwidth, binwidth)
         ax.hist(data_int, bins=bins, color='orange')
+        legend = ['Negative', 'Intermediate', 'Positive']
     if len(data_pos) != 0:
         ax.hist(data_pos, bins=np.arange(min(data_pos), max(data_pos) + binwidth, binwidth),
                 color='red')
@@ -30,5 +32,5 @@ def plot_log_rfu_histogram(x, binding_classes, ax, title='', legend=False):
     ax.set_xlabel('log(RFU)')
     ax.set_ylabel('Counts')
     if legend:
-        ax.legend(['Low', 'Intermediate', 'High'])
+        ax.legend(legend)
     return ax

@@ -80,16 +80,16 @@ def identify_binders(input, output, zscore_low, zscore_high, histogram):
 
     Glycan binding/non-binding is calculated using Median Absolute Deviation.
 
-    Glycans that fall between zscore_low and zscore_high will be classed as "intermediate" binders. These
+    Glycans that fall between zscore_low and zscore-high will be classed as "intermediate" binders. These
     will not be written to the output CSV file, and will be ignored for subsequent analyses.
-    If you don't want this behaviour, set zscore_high and zscore_low to the same value.
+    If you don't want this behaviour, set zscore-high and zscore-low to the same value.
     '''
     logger = logging.getLogger(__name__)
     _setup_logging()
     csv_data = pd.read_csv(input)
     thresholds = (zscore_low, zscore_high)
     if zscore_low > zscore_high:
-        logger.error("zscore_low can't be higher than zscore_high. Aborting.")
+        logger.error("zscore-low can't be higher than zscore-high. Aborting.")
         return
     csv_data['log_rfu'] = _log_rfu_values(csv_data.RFU)
     csv_data['ternary_binding_class'] = _calculate_binders(csv_data.log_rfu, thresholds=thresholds)
@@ -195,7 +195,7 @@ def predict_binding(input, model, output, format, verbose):
     '''Predict binding of unknown glycans from model trained on glycan microarray data.
 
     Requires a previously trained model file (a Python pickle object).
-    Use ccarl identify-motifs with the --save_model flag to generate a trained model.
+    Use ccarl identify-motifs with the --save-model flag to generate a trained model.
 
     Requires a CSV file containing a 'Structure' column.
     Will output binding probability to a csv file.

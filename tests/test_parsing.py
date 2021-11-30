@@ -1,9 +1,29 @@
 from ccarl import ccarl
 from ccarl.glycan_parsers import cfg_parser, gsl_parser
 from collections import Counter
+from ccarl.glycan_graph_methods import generate_digraph_from_glycan_string
 
 
 class TestCFGParsing:
+    @classmethod
+    def setup_class(cls):
+        cls.short_cfg_str_with_linker = 'Galb1-2Mana1-4Galb-Sp1'
+        cls.short_cfg_str_without_linker = 'Galb1-2Mana1-4Gal'
+
+    def test_parsing_with_linker(self):
+        G = generate_digraph_from_glycan_string(self.short_cfg_str_with_linker, parse_linker=True)
+        assert len(G._node) == 4
+        G = generate_digraph_from_glycan_string(self.short_cfg_str_with_linker, parse_linker=False)
+        assert len(G._node) == 3
+
+    def test_parsing_without_linker(self):
+        G = generate_digraph_from_glycan_string(self.short_cfg_str_without_linker, parse_linker=True)
+        assert len(G._node) == 3
+        G = generate_digraph_from_glycan_string(self.short_cfg_str_without_linker, parse_linker=False)
+        assert len(G._node) == 3
+
+
+class TestGSLParsing:
     @classmethod
     def setup_class(cls):
         cls.test_glycan_string_1 = '(6S)Galb1-4(Fuca1-3)(Fuca1-5)Ara-olb1-6Galb1-4Glc-Sp21'

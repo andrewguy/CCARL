@@ -106,6 +106,8 @@ class CFGGlycanParser(object):
 
         sugar_and_link = Group(Optional(OneOrMore(modification))("Modification")) + \
             Group(monosaccharide + link)
+        sugar = Group(Optional(OneOrMore(modification))("Modification")) + \
+            Group(monosaccharide)
         spacer = Group((Literal('Sp') + OneOrMore(digit) + LineEnd()) | Word('-MDPLys'))("Spacer")
         glycan = Forward()
 
@@ -114,7 +116,7 @@ class CFGGlycanParser(object):
         glycan << OneOrMore(
             Group(Optional(OneOrMore(branch))('Branch'))
             + OneOrMore(sugar_and_link)
-            ) + Optional(spacer)
+            ) + Optional(spacer | sugar)
         return glycan
 
 

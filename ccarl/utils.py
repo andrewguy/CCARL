@@ -32,7 +32,14 @@ def generate_cv_folds(df, n_splits=5, random_seed=None):
 
 
 class OptionEatAll(click.Option):
+    '''Click Option class that allows for multiple arguments, similar to *args.
 
+    In some versions of Click, needs to be used with type=tuple:
+
+        @click.option("--arg", cls=OptionEatAll, type=tuple)
+
+    From https://stackoverflow.com/questions/48391777/nargs-equivalent-for-options-in-click
+    '''
     def __init__(self, *args, **kwargs):
         self.save_other_options = kwargs.pop('save_other_options', True)
         nargs = kwargs.pop('nargs', -1)

@@ -141,6 +141,36 @@ ccarl predict-binding ./tests/test_data/test_unknowns.csv ConA.results.model.pkl
 
 The `-v` flag in the above step will print out the motifs used in the chosen model. In this example the results are saved in `ConA.unknown_preds.csv` and contain columns indicating binding probability (`Binding_Probability`), as well as the presence/absence of each feature (`Feature_{i}`).
 
+### __Comparing predicting binding across different groups of glycans__
+
+It may also be useful to use generated models to examine which lectins may be useful for distinguishing different classes of cell, for instance. To do this, we can use the `ccarl binding-overlap` tool to cross-tabulate predicted binding and some other categorical class associated with individual glycans. In this (contrived) example, we have a number of glycans which are present on 3 different cell types, provided in `./tests/test_data/predict_overlap_test.csv`. We use a previously generated Concanavalin A model to assess whether the Concanavalin A lectin may be useful for distinguishing between cell types.
+
+```bash
+ccarl binding-overlap ./tests/test_data/predict_overlap_test.csv --models ConA.results.model.pkl
+```
+
+**Output:**
+
+```text
+----Predicted binding cross-tab for model ConA.results.model.pkl----
+
+Predicted Binder  False  True 
+Class                         
+Cell 1                7     73
+Cell 2              185      3
+Cell 3                6      1
+```
+
+Ideally, we would want Concanavalin A to recognise some glycans in Cell 1, and none in Cell 2 or 3.
+
+Note that the `ccarl binding-overlap` tool can take multiple models. A handy way to cross-tabulate against a large number of pre-generated models is to make use of Bash wildcard expansion (the following command assumes your models are stored in a directory called `model_dir`):
+
+```bash
+ccarl binding-overlap ./tests/test_data/predict_overlap_test.csv --models model_dir/*.pkl
+```
+
+When used with multiple models, this tool will also provide cross-tabulation for all combinations of models, which can be useful if you are considering a combination of lectins to distinguish different cell types.
+
 ## __Citing__
 
 If you use this tool in any of your work, please cite:

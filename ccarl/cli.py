@@ -253,11 +253,10 @@ def render_glycans(input, output, format):
 
 @cli.command()
 @click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
-@click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
 @click.option("--models", cls=OptionEatAll, help='Previously trained models (accepts multiple arguments)', type=tuple)
 @click.option('--format', default='CFG',
               help='Glycan string format for input file. Currently only CFG is supported (default=CFG).')
-def binding_overlap(input, output, models, format):
+def binding_overlap(input, models, format):
     '''Cross-tabulate predicted binding from multiple models and some other binary
     separation of glycans.
 

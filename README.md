@@ -46,7 +46,7 @@ docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.0.0 predict-binding /data/test
 
 Local installation is useful if you want to integrate the CCARL package into other Python code/scripts, or want to use aspects of the CCARL tool that aren't covered by the command-line scripts.
 
-CCARL **requires** installation of both [`fast-mrmr`](https://github.com/andrewguy/fast-mRMR) and [`gBolt`](https://github.com/Jokeren/gBolt). The binaries for both of these tools should be put in your `$PATH` (otherwise you can specify the binary location when initialising the `CCARLClassifier` object).
+CCARL **requires** installation of both [`fast-mrmr`](https://github.com/andrewguy/fast-mRMR) and [`gBolt`](https://github.com/Jokeren/gBolt). The binaries for both of these tools should be put in your `$PATH` (otherwise you can specify the binary location when initialising the `CCARLClassifier` object). If you are using Ubuntu, the `install_dependencies_linux.sh` script contains the commands needed to install both `fast-mrmr` and `gbolt`. The script will need to be run with sudo (i.e. `sudo bash install_dependencies_linux.sh`) if you are running as a single command.
 
 Installation of CCARL can be performed by cloning the git repository and running `setup.py`. It is also recommended you install CCARL within a virtual environment:
 

@@ -1,5 +1,8 @@
+v1.1.0, 2021-11-30 -- Addition of extra CLI tools, small bug fixes
+    * Add binding-overlap CLI tool that allows for comparison of predicted binding between different groups of glycans.
+    * Add render-glycans CLI tool that generates a PDF of glycans in SNFG format.
+    * Fix small bug where glycans without a spacer wouldn't parse properly (root sugar was ignored).
+    * Add --render-motifs-cv option to identify-motifs CLI.
+    * Various documentation improvements.
+
 v1.0.0, 2021-11-28 -- Initial Release as a Python package
-
-
-
-

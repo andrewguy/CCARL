@@ -10,11 +10,11 @@ from sklearn.metrics import auc, roc_curve
 from ccarl import CCARLClassifier
 from ccarl.ccarl import _calculate_binders, _log_rfu_values
 from ccarl.glycan_graph_methods import digraph_to_glycan_string
-from ccarl.plotting.features import render_features_pdf
+from ccarl.plotting.features import render_features_pdf, render_glycan_list_pdf
 from ccarl.plotting.metrics import plot_kfold_test_training_roc, plot_test_training_roc
 from ccarl.plotting.microarray import plot_log_rfu_histogram
 from ccarl.plotting.utils import remove_top_right_borders
-from ccarl.utils import _setup_logging, generate_cv_folds
+from ccarl.utils import _setup_logging, generate_cv_folds, OptionEatAll
 from ccarl.validate_cfg_structures import (ArrayMismatchError,
                                            validate_cfg_structures)
 
@@ -123,14 +123,22 @@ def identify_binders(input, output, zscore_low, zscore_high, histogram):
               help='Save model as a Pickle file')
 @click.option('--render-motifs', is_flag=True,
               help='Save PDF of motifs as SNFG-style drawings')
+@click.option('--render-motifs-cv', is_flag=True,
+              help='Save PDF of motifs as SNFG-style drawings for all cross-validation folds')
 def identify_motifs(input, output_prefix, support_positive, support_all, format, cross_validation,
-                    plot_roc, save_model, render_motifs):
+                    plot_roc, save_model, render_motifs, render_motifs_cv):
     '''Extract glycan motifs from glycan microarray data.
 
     Requires a CSV file containing 'Structure' and 'Binding' columns.
     'Binding' column should contain a binary indicator (1=binding, 0=non-binder) for binding.
     Will output identified motifs to stdout, along with model performance metrics.
     '''
+    logger = logging.getLogger(__name__)
+    _setup_logging()
+    if render_motifs_cv and not cross_validation:
+        logger.error("--render-motifs-cv was set, but not --cross-validation. Did you mean to set --cross-validation? "
+                     "Run aborted.")
+        return
     csv_data = pd.read_csv(input)
 
     cf = CCARLClassifier(support_pos=support_positive, support_all=support_all, num_mrmr_features=10)
@@ -145,6 +153,8 @@ def identify_motifs(input, output_prefix, support_positive, support_all, format,
             cf.train(train.Structure, train.Binding.to_numpy(dtype=int), glycan_format=format, parse_linker=True)
             output_results_for_training(cf, train, test, title=f"----Training results for fold {i+1}----\n")
             models.append(cf)
+            if render_motifs_cv:
+                render_features_pdf(cf, f"{output_prefix}.cv_fold_{i+1}_features.pdf")
     if plot_roc and cross_validation:
         fig, ax = plt.subplots(figsize=(4, 3))
         plot_kfold_test_training_roc(ax, models, *zip(*folds))
@@ -219,4 +229,59 @@ def add_features_to_df(csv_data, model, glycan_format='CFG', parse_linker=True):
     features = np.array(features)
     for i, idx in enumerate(np.argsort(-model._model.coef_[0])):
         csv_data[f'Feature_{i+1}'] = features[:, idx]
+    return
+
+
+@cli.command()
+@click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
+@click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
+@click.option('--format', default='CFG',
+              help='Glycan string format for input file. Currently only CFG is supported (default=CFG).')
+def render_glycans(input, output, format):
+    '''Render a list of glycans as SNFG-like symbols
+
+    Does not currently support rendering of glycan strings which contain restricted linkage information.
+
+    Requires a CSV file containing a 'Structure' column.
+    Will save glycans as a PDF file, with one glycan per page. Programs such as Inkscape can be
+    used to load individual pages from this PDF file and save in other formats.
+    '''
+    csv_data = pd.read_csv(input)
+    render_glycan_list_pdf(csv_data.Structure, output, format=format)
+    return
+
+
+@cli.command()
+@click.argument('input', type=click.Path(exists=True, dir_okay=False), required=True)
+@click.argument('output', type=click.Path(exists=False, dir_okay=False), required=True)
+@click.option("--models", cls=OptionEatAll, help='Previously trained models (accepts multiple arguments)', type=tuple)
+@click.option('--format', default='CFG',
+              help='Glycan string format for input file. Currently only CFG is supported (default=CFG).')
+def binding_overlap(input, output, models, format):
+    '''Cross-tabulate predicted binding from multiple models and some other binary
+    separation of glycans.
+
+    For example, you may have a set of glycans that are present on Cell Type 1, and a set of glycans that are
+    present on Cell Type 2, and you wish to find a lectin which will allow you to adequately distinguish
+    the two cell types. Using a selection of previously trained models, you can use this tool to 
+    assess which of the trained models adequately separates the pre-defined classes (e.g. Cell Type 1
+    and Cell Type 2).
+
+    The input CSV file should contain a `Structure` column of glycan strings and a
+    `Class` column with the different glycan classes. A glycan can be present in multiple classes, and
+    in that case it should be present on multiple rows.
+
+    Use `ccarl identify-motifs` with the `--save-model` flag to generate trained models.
+    '''
+    csv_data = pd.read_csv(input)
+    model_results = []
+    for model in models:
+        print(f"----Predicted binding cross-tab for model {model}----\n")
+        with open(model, 'rb') as f:
+            cf = pickle.load(f)
+        preds = cf.predict_proba(csv_data.Structure, glycan_format=format)[:, 1]
+        model_results.append(preds)
+        crosstab = pd.crosstab(csv_data['Class'], preds > 0.5, margins=False, colnames=['Predicted Binder'])
+        print(crosstab)
+        print()
     return

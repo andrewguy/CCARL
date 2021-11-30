@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from ccarl.glycan_graph_methods import generate_digraph_from_glycan_string
 
 
 from ccarl.glycan_plotting import draw_glycan_diagram
@@ -22,5 +23,27 @@ def render_features_pdf(model, pdfname):
         fig.suptitle(f"Feature {i+1}")
         draw_glycan_diagram(feature, ax, draw_terminal_connection_labels=True)
         pp.savefig(fig)
+        plt.close(fig)
+    pp.close()
+    return
+
+
+def render_glycan_list_pdf(glycans, pdfname, format="CFG"):
+    '''Renders glcyans in a PDF document, with one glycan per page.
+
+    Args:
+        glycans (list): List of glycan strings.
+        pdfname (str): PDF output filename.
+    Returns:
+        None
+    '''
+    pp = PdfPages(pdfname)
+    glycan_graphs = [generate_digraph_from_glycan_string(x, parse_linker=True, format=format) for x in glycans]
+    for glycan, glycan_str in zip(glycan_graphs, glycans):
+        fig, ax = plt.subplots()
+        fig.suptitle(glycan_str)
+        draw_glycan_diagram(glycan, ax, draw_terminal_connection_labels=True)
+        pp.savefig(fig)
+        plt.close(fig)
     pp.close()
     return

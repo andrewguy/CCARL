@@ -263,7 +263,7 @@ def binding_overlap(input, output, models, format):
 
     For example, you may have a set of glycans that are present on Cell Type 1, and a set of glycans that are
     present on Cell Type 2, and you wish to find a lectin which will allow you to adequately distinguish
-    the two cell types. Using a selection of previously trained models, you can use this tool to 
+    the two cell types. Using a selection of previously trained models, you can use this tool to
     assess which of the trained models adequately separates the pre-defined classes (e.g. Cell Type 1
     and Cell Type 2).
 
@@ -280,8 +280,12 @@ def binding_overlap(input, output, models, format):
         with open(model, 'rb') as f:
             cf = pickle.load(f)
         preds = cf.predict_proba(csv_data.Structure, glycan_format=format)[:, 1]
-        model_results.append(preds)
+        model_results.append(preds > 0.5)
         crosstab = pd.crosstab(csv_data['Class'], preds > 0.5, margins=False, colnames=['Predicted Binder'])
         print(crosstab)
         print()
+    if len(models) > 1:
+        crosstab = pd.crosstab(csv_data['Class'], model_results, margins=False, colnames=models)
+        print("----Predicted binding cross-tab for all models----\n")
+        print(crosstab)
     return

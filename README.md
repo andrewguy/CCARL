@@ -186,4 +186,6 @@ the strings in the array version can be parsed, and to fix those that can't. You
 by parsed by using the `CFGGlycanParser.string_to_graph()` method located at 
 `ccarl/glycan_parsers.cfg_parser.CFGGlycanParser`. See example script for adding new glycan array versions at 
 `Scripts/generate_new_glycan_array_version.py`. If some glycan strings are failing, you will need to fix those,
-manually and then generate a new array version file. 
+manually and then generate a new array version file. New glycan arrays should be added to `Data/CFG_Array_Versions` 
+and `ccarl/glycan_parsers/CFG_Array_Versions`. 
+

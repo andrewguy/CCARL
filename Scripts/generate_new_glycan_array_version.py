@@ -20,7 +20,7 @@ if __name__ == "__main__":
     for structure in df["Structure"]:
         try:
             structure = clean_glycan_string(structure)
-            graph = parser.string_to_graph(structure)
+            _ = parser.string_to_graph(structure)
             succeeded.append(structure)
         except Exception as e:
             failed.append(structure)
@@ -33,3 +33,4 @@ if __name__ == "__main__":
     if not failed:  # Only write new glycan array file if all structures were successfully parsed.
         df['Structure'] = succeeded
         df.to_csv(output_path, columns=["Chart Number", "Structure"], index=False, header=False)
+        print(f"Created new file: {output_path}")

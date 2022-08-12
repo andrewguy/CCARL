@@ -57,7 +57,8 @@ def get_likely_cfg_array_version(glycan_list, distance_threshold=2.0):
 
 def clean_glycan_string(glycan: str) -> str:
     """
-    Method to clean glycan strings before parsing. n
+    Method to clean glycan strings before parsing.
+    
     Args:
         glycan: Glycan string in CFG nomenclature
 

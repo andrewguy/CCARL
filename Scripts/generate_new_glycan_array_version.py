@@ -31,6 +31,5 @@ if __name__ == "__main__":
         print(structure)
 
     if not failed:  # Only write new glycan array file if all structures were successfully parsed.
-        with open(output_path, 'w') as f:
-            for chart_number, structure in zip(df['Chart Number'], succeeded):
-                f.write(f"{chart_number},{structure}\n")
+        df['Structure'] = succeeded
+        df.to_csv(output_path, columns=["Chart Number", "Structure"], index=False, header=False)

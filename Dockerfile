@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND noninteractive
 
 WORKDIR /app
 
+COPY . .
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-pip \
         build-essential \
@@ -38,7 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pyxdameraulevenshtein \
         click \
         pyparsing && \
-    git clone https://github.com/andrewguy/CCARL.git && cd CCARL && \
+    cd /app && \
     python3 setup.py install && \
     apt-get purge -y --auto-remove build-essential cmake git && \
     rm -r /app

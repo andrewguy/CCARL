@@ -10,5 +10,5 @@ motifs and otherwise identical motifs within the core of a glycan.
 from ccarl.ccarl import CCARLClassifier
 
 
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 __all__ = ["ccarl", "validate_cfg_structures"]

@@ -176,3 +176,16 @@ When used with multiple models, the `binding-overlap` tool will also provide cro
 If you use this tool in any of your work, please cite:
 
 Coff, L., Chan, J., Ramsland, P.A., Guy, A.J.  Identifying glycan motifs using a novel subtree mining approach. BMC Bioinformatics 21, 42 (2020). [https://doi.org/10.1186/s12859-020-3374-4](https://doi.org/10.1186/s12859-020-3374-4)
+
+## __Array Versions__
+
+If you are using an array version that is not currently supported by CCARL, you can either skip the cleaning step
+(only recommended if you are confident that all glycan strings in the dataset can be parsed) or add a new array version
+to the repo. If you would like to add a new version to the repo (recommended), the first step is to make sure that all 
+the strings in the array version can be parsed, and to fix those that can't. You can check whether a glycan string can 
+by parsed by using the `CFGGlycanParser.string_to_graph()` method located at 
+`ccarl/glycan_parsers.cfg_parser.CFGGlycanParser`. See example script for adding new glycan array versions at 
+`Scripts/generate_new_glycan_array_version.py`. If some glycan strings are failing, you will need to fix those,
+manually and then generate a new array version file. New glycan arrays should be added to `Data/CFG_Array_Versions` 
+and `ccarl/glycan_parsers/CFG_Array_Versions`. 
+

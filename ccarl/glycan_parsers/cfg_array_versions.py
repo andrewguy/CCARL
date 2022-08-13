@@ -37,9 +37,7 @@ def get_likely_cfg_array_version(glycan_list, distance_threshold=2.0):
     glycan_list = list(glycan_list)
     for i, glycan in enumerate(glycan_list):
         # Handle odd characters in some excel files. Nonbreaking spaces, greek letters etc.
-        glycan_list[i] = glycan.replace('–', '-').replace('α', 'a') \
-                            .replace('β', 'b').replace('[', '(') \
-                            .replace(']', ')').replace(' ', '').replace(u"\u00A0", '')
+        glycan_list[i] = clean_glycan_string(glycan)
     likely_array = None
     likely_array_mismatches = None
     scaled_levenshtein_total = 0
@@ -55,3 +53,18 @@ def get_likely_cfg_array_version(glycan_list, distance_threshold=2.0):
     if scaled_levenshtein_total > distance_threshold:
         raise ValueError("Glycan list does not match to known array versions.")
     return list(cfg_array_versions[likely_array][1]), likely_array, likely_array_mismatches, scaled_levenshtein_total
+
+
+def clean_glycan_string(glycan: str) -> str:
+    """
+    Method to clean glycan strings before parsing.
+    
+    Args:
+        glycan: Glycan string in CFG nomenclature
+
+    Returns: cleaned glycan string
+
+    """
+    return glycan.replace('–', '-').replace('α', 'a') \
+        .replace('β', 'b').replace('[', '(') \
+        .replace(']', ')').replace(' ', '').replace(u"\u00A0", '')

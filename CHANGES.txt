@@ -1,3 +1,10 @@
+v1.2.0, 2022-08-13 -- Addition of CFG array version 5.5
+    * Add CFG array version 5.5
+    * Add helper function clean_glycan_string
+    * Add example script for generating new glycan array version
+    * Update dockerfile to use code in current repo
+
+
 v1.1.0, 2021-11-30 -- Addition of extra CLI tools, small bug fixes
     * Add binding-overlap CLI tool that allows for comparison of predicted binding between different groups of glycans.
     * Add render-glycans CLI tool that generates a PDF of glycans in SNFG format.

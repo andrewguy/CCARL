@@ -13,33 +13,33 @@ Additionally, it can also be used to classify binding to glycans with unknown bi
 The easiest way to run the CCARL tool is to use the provided Docker container which provides easy access to the CCARL command-line scripts:
 
 ```bash
-docker pull andrewguy/ccarl:v1.1.0
+docker pull andrewguy/ccarl:v1.2.0
 
-docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.1.0 --help
+docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.2.0 --help
 ```
 
 To validate CFG data (often needed because the CFG data usually contains errors which break the glycan parsing tool):
 
 ```bash
-docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.1.0 validate-structures /data/tests/test_data/ConA_13799-10ug_V5.0_DATA.csv /data/ConA.validated.csv -v
+docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.2.0 validate-structures /data/tests/test_data/ConA_13799-10ug_V5.0_DATA.csv /data/ConA.validated.csv -v
 ```
 
 To identify binary thresholds for binding/non-binding glycans from RFU data, saving a histogram of binding:
 
 ```bash
-docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.1.0 identify-binders /data/ConA.validated.csv /data/ConA.binders.csv --histogram /data/ConA_hist.png
+docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.2.0 identify-binders /data/ConA.validated.csv /data/ConA.binders.csv --histogram /data/ConA_hist.png
 ```
 
 To identify binding motifs from binary binding data, performing 5-fold cross-validation, plotting ROC curves and saving the model trained on the entire dataset:
 
 ```bash
-docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.1.0 identify-motifs /data/ConA.binders.csv /data/ConA.results --cross-validation --plot-roc --save-model
+docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.2.0 identify-motifs /data/ConA.binders.csv /data/ConA.results --cross-validation --plot-roc --save-model
 ```
 
 To perform binding prediction on unknown glycans:
 
 ```bash
-docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.1.0 predict-binding /data/tests/test_data/test_unknowns.csv /data/ConA.results.model.pkl /data/ConA.predicted.csv
+docker run --rm -v `pwd`:/data andrewguy/ccarl:v1.2.0 predict-binding /data/tests/test_data/test_unknowns.csv /data/ConA.results.model.pkl /data/ConA.predicted.csv
 ```
 
 ## Local Installation
